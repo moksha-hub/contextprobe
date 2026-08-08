@@ -96,7 +96,9 @@ Only this. No ground truth, no probe hints:
 
 ### Output 2 — the risk-ranked repair queue
 
-Measured on the seeded fixture with the simulated answerer (`py backend\measure.py`). 18 probes: 8 correct, 3 abstained, 7 confident wrong.
+Measured on the seeded fixture with the **simulated** answerer (`py backend\measure.py`). 18 probes: 8 correct, 3 abstained, 7 confident wrong.
+
+> These risk values come from the simulated behavioural model. Measured against a real model the confident-wrong count drops from 7 to 1, so **these numbers overstate the danger** — see [the study](#measured-against-a-real-model--the-hypothesis-was-falsified). The ranking mechanism is what this table demonstrates, not a calibrated risk level.
 
 | Asset | Coverage | Correct | Abstained | Wrong | Downstream | Risk |
 |---|---:|---:|---:|---:|---:|---:|
@@ -181,15 +183,58 @@ It verifies answerability, not truth. The accepted candidate inherits *"before r
 
 That is the sharpest argument for LLM mode: only a model reading the sentence could catch it. Until then the verdict is a recommendation for a steward, never an auto-commit. Committing stays a separate explicit `PATCH`.
 
+## Measured against a real model — the hypothesis was falsified
+
+The simulated engine encodes one claim: **a present-but-vague description invites a confident guess.** I tested it rather than assuming it, against `inclusionai/ling-3.0-tiny` via OpenRouter, temperature 0, two studies.
+
+It does not hold.
+
+| | simulated (18 probes) | real model (26 evaluations) |
+|---|---:|---:|
+| correct | 8 | 15 |
+| abstained | 3 | 10 |
+| **confident wrong** | **7** | **1** |
+
+On **every** probe where the simulated engine predicted a confident guess, the real model declined instead:
+
+```text
+P_NET_TAX         sim: confident_wrong  ->  model: abstained
+P_NET_REFUND      sim: confident_wrong  ->  model: abstained
+P_NET_CCY         sim: confident_wrong  ->  model: abstained
+P_NET_RECOG       sim: confident_wrong  ->  model: abstained
+P_REGION_SCHEME   sim: confident_wrong  ->  model: abstained
+P_REV_GRAIN       sim: confident_wrong  ->  model: abstained
+P_STATUS_VALUES   sim: confident_wrong  ->  model: abstained
+```
+
+Asked *"Does net_revenue include tax?"* with only `"Net revenue."` to work from, the model answered: *"The metadata does not specify whether net_revenue includes tax."* That is the correct, safe response — and better behaviour than my rule predicted.
+
+**So the risk scores computed by the simulated engine overstate the danger.** The seeded `4.00` for `dim_customer` reflects a modelling assumption, not measured model behaviour. That is now stated wherever those numbers appear.
+
+### Two findings that came out of being wrong
+
+**A vague description may be safer than an absent one.** In the first study, `P_RECOG_MEAN` — a column with *no* description at all — was the one probe where the model guessed rather than declined. A vague description at least signals that documentation exists and does not cover the question. A missing one appears to invite invention. That is the opposite direction from my hypothesis, and it inverts the intuition that some documentation is always better than none.
+
+**Self-declared uncertainty was read correctly.** On `legacy_customers.email` (*"Unverified legacy field, see owner before use"*), the simulated engine abstains by rule. The model went further and answered correctly that the field should not be used — reading the hedge as a governance signal rather than a gap.
+
+### Honest limits on this study
+
+- One small free-tier model. Says nothing about GPT-4o, Claude, or Gemini.
+- 26 usable evaluations out of 36 attempted. The free tier returned 42 rate-limit responses across both studies; retries recovered most, 11 exhausted. Probes without model data are **excluded** from the totals rather than filled in with simulated output.
+- Two probes were unstable across runs (`P_GROSS_REFUND`, `P_LEGACY_USE`), which is itself a signal that those descriptions are ambiguous.
+- Fixing this exposed a real grader bug: the model said *"does not specify"* while my abstain phrases only matched *"not specified"*. Reading an abstention as a confident wrong answer would have inflated the one number this project asks anyone to act on.
+
+Reproduce with `py backend\llmstudy.py 2`. The default fixture results stay on the simulated engine so they remain reproducible without an API key.
+
 ## The two answerers
 
 **`simulated`** (default, no API key needed) is a deterministic behavioural model. It is not a language model and does not pretend to be one. It encodes one explicit, falsifiable hypothesis:
 
 > A description that is present but missing the needed fact invites a confident guess. A description that is absent, or that declares its own uncertainty, produces an abstention.
 
-**`llm`** (optional) sends the same context to a real OpenAI-compatible model, so the hypothesis above can be **tested rather than assumed**. If a real model abstains on a vague description where the simulated engine guesses, that is a genuine falsification of the hypothesis for that probe — and the harness will show it.
+**`llm`** (optional) sends the same context to a real OpenAI-compatible model, so the hypothesis above can be **tested rather than assumed**. It was, and it failed — see the study above.
 
-This separation is deliberate: the reproducible engine makes the demo runnable and deterministic; the LLM engine makes the claim testable.
+This separation is deliberate: the reproducible engine makes the demo runnable and deterministic without a key; the LLM engine makes the claim falsifiable. The adapter negotiates JSON mode down when a provider rejects `response_format`, grades prose replies, and retries rate limits with backoff, so a provider limitation never gets silently recorded as a model result.
 
 ## Architecture
 
@@ -255,24 +300,36 @@ Open `http://localhost:5173`. API docs at `http://localhost:8000/docs`.
 
 ### Optional: probe with a real model
 
-```cmd
-set LLM_API_KEY=your-key
-set LLM_MODEL=your-compatible-model
-set LLM_BASE_URL=https://api.openai.com/v1
+Copy `.env.example` to `.env` (gitignored) and fill in any OpenAI-compatible provider:
+
+```ini
+LLM_API_KEY=your-key
+LLM_MODEL=inclusionai/ling-3.0-tiny:free
+LLM_BASE_URL=https://openrouter.ai/api/v1
+LLM_DELAY_SECONDS=1.5
 ```
 
-Never commit keys. If the provider fails or returns unusable JSON, each probe falls back to the simulated engine and the response reports `llm_fallbacks`.
+Then:
+
+```cmd
+py backend\llmcheck.py     :: connectivity and JSON-mode support
+py backend\llmstudy.py 2   :: run the suite twice, compare with the hypothesis
+```
+
+Never commit keys. If a provider fails, each probe falls back to the simulated engine and the response reports `llm_fallbacks` — and `llmstudy.py` excludes those probes from its model totals rather than passing simulated output off as a model result.
 
 ## Verify
 
 ```cmd
-py backend\selfcheck.py
-py backend\repaircheck.py
-py backend\apicheck.py
-py backend\measure.py
+py backend\selfcheck.py    :: fixture and grader invariants
+py backend\repaircheck.py  :: repair gate behaviour + dry-run safety
+py backend\apicheck.py     :: full API surface
+py backend\measure.py      :: the numbers in this README
 py -m compileall backend\app
 cd frontend && npm run build
 ```
+
+None of these need an API key. `llmcheck.py` and `llmstudy.py` do.
 
 `repaircheck.py` asserts the gate's behaviour and two safety invariants: after any dry run the stored description must be byte-identical, and the `probe_results` row count must be unchanged. A repair tool that silently mutates the catalog, or leaves dry-run outcomes behind as if they were real, is worse than no repair tool.
 
@@ -313,7 +370,8 @@ Then the gate, on `fct_revenue`:
 
 - The catalog and ground truth are synthetic; 12 assets and 18 probes demonstrate the method, not industry generalization.
 - Ground truth is author-written, so the benchmark and the system share assumptions.
-- The simulated engine is a hypothesis about model behaviour, **not evidence** about real models. Only LLM mode produces evidence, and only for the model tested.
+- The simulated engine is a hypothesis about model behaviour, and testing it against a real model **falsified it**: the confident-wrong count fell from 7 to 1. Its risk scores overstate the danger and should be read as a demonstration of the ranking mechanism, not as calibrated risk.
+- The real-model study covers one small free-tier model and 26 usable evaluations. It is not a generalisation about language models.
 - Grading uses substring markers on short answers. This is why `selfcheck.py` exists; it would not scale to long free-form responses without semantic matching.
 - Probes are hand-written per column. Schema-derived probe generation would miss business context a human knows to ask about.
 - Risk weights (1.5× for certified) are chosen, not learned.

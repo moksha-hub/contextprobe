@@ -6,10 +6,17 @@ CORRECT = "correct"
 ABSTAINED = "abstained"
 CONFIDENT_WRONG = "confident_wrong"
 
+# Phrasings a model actually uses to decline. Kept deliberately wide: reading an
+# abstention as a confident wrong answer would inflate the risk score, which is
+# the one number this project asks anyone to act on.
 ABSTAIN_PHRASES = (
     "does not contain", "does not say", "does not state", "does not list",
-    "not specified", "cannot answer", "no information", "unclear from",
-    "insufficient", "not documented", "unable to determine", "not enough",
+    "does not specify", "does not mention", "does not indicate", "does not define",
+    "does not provide", "does not describe", "doesn't specify", "doesn't mention",
+    "doesn't say", "doesn't state", "not specified", "not mentioned", "not indicated",
+    "no indication", "no information", "not documented", "not available in",
+    "cannot answer", "can't answer", "cannot determine", "unable to determine",
+    "unclear from", "insufficient", "not enough", "no way to tell", "cannot tell",
 )
 
 

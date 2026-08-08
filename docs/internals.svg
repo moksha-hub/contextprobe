@@ -214,9 +214,9 @@
   <g transform="rotate(-0.2 722 1580)">
     <rect x="164" y="1512" width="1116" height="148" rx="8" fill="#fdeceb" stroke="#b03a2e" stroke-width="2.6"/>
   </g>
-  <text x="184" y="1542" font-size="18" font-weight="bold" fill="#b03a2e">WHAT THESE NUMBERS DO NOT PROVE&#8194;&#8194;(read before quoting them)</text>
-  <text x="184" y="1572" font-size="13.5" fill="#23201c">The simulated engine's rule IS "vague &#8594; confident guess". So 4/4 wrong on net_revenue restates the rule; it is not a discovery.</text>
-  <text x="184" y="1596" font-size="13.5" fill="#23201c">It proves the HARNESS works and is reproducible. It says nothing yet about how real language models behave.</text>
-  <text x="184" y="1620" font-size="13.5" fill="#b03a2e">Only Engine B (a real model, temp 0, repeated runs) converts this into evidence &#8212; and it may FALSIFY the rule. That result would be</text>
-  <text x="184" y="1642" font-size="13.5" fill="#b03a2e">more interesting than confirmation, and the harness reports it either way.</text>
+  <text x="184" y="1542" font-size="18" font-weight="bold" fill="#b03a2e">TESTED AGAINST A REAL MODEL &#8212; AND FALSIFIED</text>
+  <text x="184" y="1572" font-size="13.5" fill="#23201c">The simulated rule is "vague &#8594; confident guess". So 4/4 wrong on net_revenue restates the rule; it is not a discovery.</text>
+  <text x="184" y="1596" font-size="13.5" fill="#b03a2e">Run against ling-3.0-tiny at temp 0: on ALL 7 probes where the rule predicted a guess, the model ABSTAINED instead.</text>
+  <text x="184" y="1620" font-size="13.5" fill="#b03a2e">confident_wrong: simulated 7 &#8594; model 1 (of 26 evaluations). These risk scores OVERSTATE the danger.</text>
+  <text x="184" y="1642" font-size="13.5" fill="#2e6b4f">Bonus finding: the one probe the model DID guess on had NO description at all &#8212; absent metadata looks more dangerous than vague.</text>
 </svg>
