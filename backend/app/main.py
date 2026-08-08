@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
-from . import answerer, catalog, report, risk, runner
+from . import answerer, catalog, repair, report, risk, runner
 from .database import initialize, reset_fixture
 
 
@@ -46,6 +46,12 @@ class ProbeRequest(BaseModel):
 class DescriptionUpdate(BaseModel):
     column_name: str | None = None
     description: str | None = Field(default=None, max_length=2000)
+
+
+class RepairRequest(BaseModel):
+    column_name: str
+    strategy: str = "grounded"
+    mode: str = "auto"
 
 
 @app.get("/health")
@@ -105,6 +111,27 @@ def edit_description(asset_id: str, update: DescriptionUpdate) -> dict:
     except LookupError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     return {"asset_id": asset_id, "column_name": update.column_name, "saved": True}
+
+
+@app.post("/api/assets/{asset_id}/repair")
+def propose_repair(asset_id: str, request: RepairRequest) -> dict:
+    """Propose a rewrite and report whether it clears the gate. Never commits."""
+    try:
+        return repair.repair_column(
+            asset_id, request.column_name, request.strategy, request.mode
+        )
+    except LookupError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
+
+
+@app.post("/api/repair")
+def repair_catalog(request: ProbeRequest) -> dict:
+    try:
+        return repair.repair_all(request.mode)
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
 
 
 @app.get("/api/report")

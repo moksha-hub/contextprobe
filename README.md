@@ -20,6 +20,8 @@ The two dashed zones are the point of the whole design. Anything inside the red 
 
 ![Contextprobe internals, scoring and measured output](docs/internals.svg)
 
+![Contextprobe repair gate](docs/repair-gate.svg)
+
 ## What it does
 
 1. Assembles exactly the metadata a production agent would receive for an asset or column — nothing else.
@@ -125,6 +127,60 @@ Two columns, same asset, both documented, four matched probes each:
 
 Column coverage scores these identically.
 
+## The repair gate
+
+Finding the bad description is half the job. The other half is knowing whether an edit actually helped — and that is not obvious, because **a longer description can be worse**.
+
+Atlan AI Labs measured exactly that: their enhanced metadata lifted SQL accuracy 38% (522 evaluations, p < 0.0001), but the *verbose* variant of the same facts performed [13.8% worse and cost 52% more](https://atlan.com/know/enhanced-metadata-improves-query-accuracy/), because prose written for humans reads as noise to a model.
+
+So a description edit needs a test, not a hope:
+
+```text
+POST /api/assets/{id}/repair    ->  strictly a dry run
+
+1 baseline    probe the asset                       (persist=False)
+2 ground      collect upstream + sibling clauses via lineage
+3 compose     grounded | verbose | narrow
+4 apply       write the candidate temporarily
+5 re-probe    same suite                            (persist=False)
+6 restore     in a finally block, always
+7 verdict     ACCEPTED  <=>  fixed > 0 AND regressed == 0
+```
+
+### Generation is blind to the probe suite
+
+The composer never sees `required_terms`. If it did, it would insert the exact tokens the grader looks for and every repair would pass by construction. It may only draw on documented text: upstream column descriptions reached through lineage, sibling columns, and the asset description. Diagnosis *after* the run may use the probe definitions; generation may not.
+
+### Three strategies, because a gate that only accepts proves nothing
+
+| Strategy | Verdict | Why |
+|---|---|---|
+| `grounded` | ACCEPTED | 175 chars, 3 probes fixed, 0 regressed |
+| `verbose` | REJECTED | 504 chars — the facts are present but fall past the 200-char salience window |
+| `narrow` | REJECTED | on `gross_revenue`, drops the refund and order-date facts: 2 regressions |
+
+The salience window models attention decay. Every description in the fixture is under 100 characters, so it changes no baseline result — it only catches padded rewrites. Like the simulated answerer, it is a documented hypothesis grounded in Atlan's published regression, not evidence about real models.
+
+### Measured sweep
+
+`POST /api/repair` attempts a grounded repair on every column that currently fails:
+
+| Column | Verdict |
+|---|---|
+| `fct_revenue.net_revenue` | ACCEPTED — 3 fixed |
+| `dim_customer.region` | rejected |
+| `stg_payments.payment_status` | rejected |
+
+**Accept rate 1/3.** Both rejections are correct: `region` needs "shipping versus billing" and `payment_status` needs its allowed values, and neither fact exists anywhere in the catalog. No lineage-grounded rewrite can supply them — a human has to. The gate says so instead of shipping confident filler.
+
+That result supports Atlan's own guidance that [people are better editors than authors](https://docs.atlan.com/product/capabilities/governance/context-agents-studio/best-practices/enrich-metadata-at-scale), with a measurement rather than an intuition.
+
+### What the gate does not do
+
+It verifies answerability, not truth. The accepted candidate inherits *"before returns, refunds and tax"* from `gross_revenue` — correct there, and semantically **wrong** for net revenue, which is measured *after* refunds. The probe passes on keyword presence and cannot see the inverted polarity.
+
+That is the sharpest argument for LLM mode: only a model reading the sentence could catch it. Until then the verdict is a recommendation for a steward, never an auto-commit. Committing stays a separate explicit `PATCH`.
+
 ## The two answerers
 
 **`simulated`** (default, no API key needed) is a deterministic behavioural model. It is not a language model and does not pretend to be one. It encodes one explicit, falsifiable hypothesis:
@@ -211,11 +267,14 @@ Never commit keys. If the provider fails or returns unusable JSON, each probe fa
 
 ```cmd
 py backend\selfcheck.py
+py backend\repaircheck.py
 py backend\apicheck.py
 py backend\measure.py
 py -m compileall backend\app
 cd frontend && npm run build
 ```
+
+`repaircheck.py` asserts the gate's behaviour and two safety invariants: after any dry run the stored description must be byte-identical, and the `probe_results` row count must be unchanged. A repair tool that silently mutates the catalog, or leaves dry-run outcomes behind as if they were real, is worse than no repair tool.
 
 `apicheck.py` drives the whole API with FastAPI's test client, including the fix-and-re-probe loop, queue ordering, 404/422 paths, and a check that hidden ground truth never leaks through the read endpoints.
 
@@ -227,9 +286,11 @@ cd frontend && npm run build
 - `GET /api/assets/{id}` — columns, probes, per-column breakdown, latest results
 - `POST /api/assets/{id}/probe` — probe one asset (`{"mode":"auto"}` or `"simulated"`)
 - `POST /api/probe` — probe the whole catalog, returns the refreshed queue
+- `POST /api/assets/{id}/repair` — propose a rewrite and gate it (dry run, never commits)
+- `POST /api/repair` — attempt a grounded repair on every failing column, returns the accept rate
 - `PATCH /api/assets/{id}/description` — edit an asset or column description
 - `GET /api/report` — coverage-vs-risk comparison and the controlled pair
-- `POST /api/reset` — restore seeded descriptions, clear probe history
+- `POST /api/reset` — restore seeded descriptions, clear probe and repair history
 - `GET /health` — status and whether an LLM is configured
 
 ## Demo path
@@ -242,6 +303,12 @@ cd frontend && npm run build
 6. Save. The outcome flips to correct and the risk drops to 0.00.
 7. Open `legacy_customers` — also 100% covered, but it declares itself unverified, so the agent abstained. Risk 0.00. Honest incompleteness beats confident vagueness.
 
+Then the gate, on `fct_revenue`:
+
+8. In **Repair gate**, pick `net_revenue`, strategy `grounded`, and propose. It composes a rewrite from upstream text, fixes 3 probes, regresses none, and stamps ACCEPTED.
+9. Switch to `verbose` and propose again. Same facts, 504 characters, REJECTED — buried past the salience window. This is Atlan's 13.8% verbose regression reproduced in miniature.
+10. Pick `gross_revenue` with `narrow`. REJECTED for regression: it drops the refund and order-date facts that two passing probes relied on.
+
 ## Limitations
 
 - The catalog and ground truth are synthetic; 12 assets and 18 probes demonstrate the method, not industry generalization.
@@ -251,6 +318,9 @@ cd frontend && npm run build
 - Probes are hand-written per column. Schema-derived probe generation would miss business context a human knows to ask about.
 - Risk weights (1.5× for certified) are chosen, not learned.
 - A description could be gamed by stuffing required keywords. A held-out probe set would be needed to resist that.
+- The repair gate verifies answerability, not truth: an inherited clause can be correct for its source column and wrong for the target, and keyword-presence grading cannot see the difference.
+- The salience window is a chosen threshold modelling attention decay, not a measured property of any specific model.
+- Repair grounding is limited to what the catalog already documents, so a fact that exists nowhere cannot be recovered — by design, and the reason the accept rate is 1 in 3.
 - No auth, no multi-tenancy, no real warehouse or catalog connector, no migrations.
 
 ## Design decisions, and what I rejected
@@ -267,13 +337,35 @@ cd frontend && npm run build
 
 **Probes are upserted, not `INSERT OR IGNORE`.** A corrected probe suite must never grade against a stale seeded row. My marker fix silently didn't apply until I changed this.
 
-**Rejected:** an LLM judge (it would make the model both subject and judge); embeddings for grading (unjustifiable complexity at 18 probes with short answers); a real warehouse connector (reproducibility matters more here than realism); a vector store, an agent framework, and multi-tenancy (none earn their weight at this scale).
+**The repair composer may not see the probe suite.** Generating from `required_terms` would insert the exact tokens the grader matches and make every repair pass by construction. Grounding is restricted to upstream and sibling descriptions, so the probes stay an independent judge — which is why the honest accept rate is 1 in 3 rather than 3 in 3.
 
-## Prior art and what is different
+**Repairs are dry runs with an explicit commit step.** The gate restores the original description in a `finally` block and never writes to `probe_results`. Both are asserted in `repaircheck.py`, not just documented.
 
-Atlan's published [metadata feedback loop](https://blog.atlan.com/community/metadata-feedback-loop-context-layer/) captures **human** signals — a thumbs-down and a reason — and their post closes by asking openly what the loop looks like when agents close it too, naming an agent's failed query and hallucinated answer as the signals still to capture. Their [Sherlock post](https://blog.atlan.com/engineering/loop-engineering-in-production-putting-ai-agents-on-call/) states the related constraint plainly: confidence is not accuracy.
+**Rejected:** an LLM judge (it would make the model both subject and judge); embeddings for grading (unjustifiable complexity at 18 probes with short answers); a real warehouse connector (reproducibility matters more here than realism); auto-committing accepted repairs (answerability is not truth — a steward has to confirm the wording); a vector store, an agent framework, and multi-tenancy (none earn their weight at this scale).
 
-Contextprobe is one small answer to that open question. Instead of waiting for a human to report confusion, it provokes the failure on purpose, before deployment, and ranks the metadata by how much damage the failure would do. It is far smaller than anything in production — the contribution is the unit of measurement, not the scale.
+## Prior art, verified
+
+I checked this against Atlan's published material rather than assuming novelty. Two things came back.
+
+**Measuring metadata quality by probing an agent is not new — Atlan already published it.** [Atlan AI Labs](https://atlan.com/know/enhanced-metadata-improves-query-accuracy/) ran 174 queries three times each (522 evaluations) on a 13-table Formula One dataset, holding the model constant and varying only metadata quality. Win rate went from 16.1% to 22.2%: a 38% relative lift at p < 0.0001, with a 2.15x gain on medium-complexity queries. Their illustrative failure is almost this project's `net_revenue` case — an agent asked which drivers were eliminated, found no `eliminated` column, and produced confident, plausible, wrong SQL.
+
+So this project does not claim that idea. What differs is narrower:
+
+| | Atlan (published) | Contextprobe |
+|---|---|---|
+| Unit measured | aggregate lift of a whole context bundle | per column, attributed |
+| Output | proof that metadata investment pays | a ranked repair queue |
+| Outcome classes | binary query win rate | correct / safely abstained / confidently wrong |
+| Prioritisation | query complexity, consumption layer | failure rate × downstream blast radius |
+| After measuring | — | a gate that verifies the rewrite |
+
+**The blind spot is real and current.** Four separate Atlan doc pages state that context agents only enrich assets *missing* the target attribute and that existing values are never overwritten ([FAQ](https://docs.atlan.com/product/capabilities/governance/context-agents-studio/faq/metadata-enrichment), [concepts](https://docs.atlan.com/product/capabilities/governance/context-agents-studio/concepts/agents), [how-to](https://docs.atlan.com/product/capabilities/governance/context-agents-studio/how-tos/enrich-metadata-on-asset-collection), [best practices](https://docs.atlan.com/product/capabilities/governance/context-agents-studio/best-practices/enrich-metadata-at-scale)). The same FAQ defines coverage as a fill-rate — 60 of 100 assets with a description gives 60% — and notes that collections count parent assets, not columns. Their troubleshooting entry for "the agent runs but generates 0 descriptions" gives the cause as every asset already having one.
+
+Put together: `"Net revenue."` counts as fully covered, is skipped by enrichment by design, and is only caught if a human happens to get confused and report it. That is the population this project targets, and the repair gate is what lets an edit to it be verified rather than trusted.
+
+Their [metadata feedback loop](https://blog.atlan.com/community/metadata-feedback-loop-context-layer/) captures human signals today, and that post closes by asking openly what the loop looks like when agents close it too — naming a hallucinated answer as a signal still to capture. Their [Sherlock post](https://blog.atlan.com/engineering/loop-engineering-in-production-putting-ai-agents-on-call/) states the related constraint plainly: confidence is not accuracy.
+
+This is far smaller than anything they run in production. The contribution is the unit of measurement and the verification step, not the scale.
 
 ## License
 

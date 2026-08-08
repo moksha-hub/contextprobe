@@ -47,6 +47,45 @@ Deterministic and independent of the model:
 
 Substring markers are fragile. That fragility is contained by `selfcheck.py`, which asserts for all 18 probes that the ground-truth answer matches its own markers and the wrong answer does not. That check caught a real defect during development.
 
+## The repair gate
+
+Measuring which description is bad is only useful if you can tell whether the fix helped. That is not self-evident: Atlan AI Labs measured a verbose variant of the *same facts* performing 13.8% worse than a concise one. Description edits are not monotonic improvements, so they need a test.
+
+The gate is a dry run. It baselines the asset, composes a candidate from documented text, applies it, re-probes, and restores the original in a `finally` block. A candidate is accepted only when `fixed > 0 and regressed == 0`.
+
+### Generation is blind, diagnosis is not
+
+The composer may only read upstream column descriptions reached through lineage, sibling columns, and the asset description. It never sees `required_terms`. If it did, it would insert the exact tokens the grader matches on and every repair would pass trivially — the same circularity the simulated answerer has to avoid.
+
+After the run, diagnosis *does* use the probe definitions, to distinguish two different rejections: facts absent from the grounding entirely, versus facts present in the candidate but past the salience window.
+
+### The salience window
+
+`SALIENCE_CHARS = 200`. Only the first 200 characters of each description count as reliably visible. This models attention decay, and it exists so the gate can reject padding rather than reward it.
+
+Every seeded description is under 100 characters, so the window changes no baseline result — verified by re-running `measure.py` after introducing it. It is a documented hypothesis, not evidence about real models.
+
+### What counts as a regression
+
+- `confident_wrong -> correct` is **fixed**
+- `correct -> anything else` is a **regression**
+- `abstained -> confident_wrong` is a **regression** (a safe failure became a dangerous one)
+- `confident_wrong -> abstained` is **made_safe** — an improvement, but not enough to accept on its own
+
+Regressions are counted across *all* probes on the asset, not just the target column, because an asset-level probe sees every column description and a rewrite can cause collateral damage.
+
+### Why a dry run, and why that is asserted
+
+`run_probes(persist=False)` keeps dry-run outcomes out of `probe_results`. Without it the risk queue would move during evaluation and a rejected candidate would leave its outcomes behind as though they were real.
+
+Two invariants in `repaircheck.py` enforce this: after any dry run the stored description must be byte-identical, and the `probe_results` row count must be unchanged. Both are asserted rather than assumed.
+
+### Known limitation: answerability is not truth
+
+The accepted candidate for `net_revenue` inherits *"before returns, refunds and tax"* from its sibling `gross_revenue`. That clause is correct for gross revenue and wrong for net revenue, which is measured after refunds. The probe checks keyword presence and cannot detect the inverted polarity, so it passes.
+
+This is the strongest argument for LLM mode, and the reason the gate produces a recommendation for a steward rather than an auto-commit. Committing remains a separate explicit `PATCH`.
+
 ## Risk model
 
 ```text

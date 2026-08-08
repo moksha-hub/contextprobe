@@ -53,6 +53,21 @@ CREATE TABLE IF NOT EXISTS probe_results (
 );
 CREATE INDEX IF NOT EXISTS probe_results_latest
   ON probe_results (probe_id, created_at DESC);
+CREATE TABLE IF NOT EXISTS repairs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  asset_id TEXT NOT NULL REFERENCES assets(id),
+  column_name TEXT NOT NULL,
+  strategy TEXT NOT NULL,
+  engine TEXT NOT NULL,
+  before_description TEXT,
+  after_description TEXT NOT NULL,
+  fixed_count INTEGER NOT NULL,
+  regressed_count INTEGER NOT NULL,
+  unchanged_count INTEGER NOT NULL,
+  verdict TEXT NOT NULL,
+  reject_reason TEXT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 """
 
 
@@ -209,9 +224,10 @@ def initialize() -> None:
 
 
 def reset_fixture() -> None:
-    """Restore seeded descriptions and clear probe history."""
+    """Restore seeded descriptions and clear probe and repair history."""
     with connect() as db:
         db.execute("DELETE FROM probe_results")
+        db.execute("DELETE FROM repairs")
         db.executemany(
             "UPDATE assets SET description = ? WHERE id = ?",
             [(asset[3], asset[0]) for asset in ASSETS],

@@ -169,6 +169,122 @@ function FixPanel({asset, columns, onSaved}) {
 }
 
 
+function RepairPanel({asset, breakdown, onApplied}) {
+  const failing = breakdown.filter(row => row.confident_wrong > 0 && row.column !== '(asset level)');
+  const [column, setColumn] = useState(failing[0]?.column || '');
+  const [strategy, setStrategy] = useState('grounded');
+  const [result, setResult] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    setResult(null);
+    setColumn(failing[0]?.column || '');
+  }, [asset.id]);
+
+  if (!failing.length) {
+    return <div className="repair-panel">
+      <p className="eyebrow">Repair gate</p>
+      <p className="empty-note">No column on this asset is currently failing a probe.</p>
+    </div>;
+  }
+
+  async function propose(event) {
+    event.preventDefault();
+    setBusy(true);
+    setError('');
+    try {
+      setResult(await api(`/assets/${asset.id}/repair`, send('POST', {
+        column_name: column, strategy, mode: 'auto'
+      })));
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function applyCandidate() {
+    setBusy(true);
+    setError('');
+    try {
+      await api(`/assets/${asset.id}/description`, send('PATCH', {
+        column_name: result.column_name, description: result.after_description
+      }));
+      setResult(null);
+      await onApplied();
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const accepted = result?.verdict === 'accepted';
+  return <form className="repair-panel" onSubmit={propose}>
+    <p className="eyebrow">Repair gate &#183; dry run</p>
+    <p className="repair-lede">
+      Generate a rewrite from upstream and sibling metadata only, then re-probe.
+      Accepted only if a failing question becomes answerable and none regress.
+    </p>
+    <div className="repair-controls">
+      <label>
+        Column
+        <select value={column} onChange={event => setColumn(event.target.value)}>
+          {failing.map(row => <option key={row.column} value={row.column}>{row.column}</option>)}
+        </select>
+      </label>
+      <label>
+        Strategy
+        <select value={strategy} onChange={event => setStrategy(event.target.value)}>
+          <option value="grounded">grounded &#8212; concise</option>
+          <option value="verbose">verbose &#8212; padded</option>
+          <option value="narrow">narrow &#8212; single clause</option>
+        </select>
+      </label>
+      <button className="secondary" disabled={busy}>
+        {busy ? 'Probing…' : 'Propose rewrite'}
+      </button>
+    </div>
+    {error && <p className="error" role="alert">{error}</p>}
+    {result && <div className="repair-result">
+      <div className={`verdict ${result.verdict}`}>
+        {accepted ? 'ACCEPTED' : 'REJECTED'}
+        <small>
+          {result.fixed_count} fixed &#183; {result.regressed_count} regressed &#183;
+          {' '}{result.candidate_length}/{result.salience_chars} chars
+        </small>
+      </div>
+      {result.reject_reason && <p className="reject-reason">{result.reject_reason}</p>}
+      <div className="diff">
+        <div><span>before</span><code>{result.before_description || 'no description'}</code></div>
+        <div><span>candidate</span><code>{result.after_description}</code></div>
+      </div>
+      <table className="transitions">
+        <tbody>
+          {result.probe_transitions.filter(row => row.transition !== 'unchanged').map(row =>
+            <tr key={row.probe_id} className={row.transition}>
+              <td>{row.probe_id}</td>
+              <td>{row.before}</td>
+              <td>&#8594;</td>
+              <td>{row.after}</td>
+              <td>{row.transition}</td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+      <p className="grounding">
+        Drew on {result.grounding_used.length} of {result.grounding_available} documented
+        clauses: {result.grounding_used.map(item =>
+          `${item.from_column || item.from_asset} (${item.origin})`).join(', ')}
+      </p>
+      <p className="caution">{result.caution}</p>
+      {accepted && <button type="button" className="primary" disabled={busy}
+        onClick={applyCandidate}>Apply this rewrite</button>}
+    </div>}
+  </form>;
+}
+
 function AssetDetail({detail, onProbe, onSaved, running}) {
   const {asset, columns, results, column_breakdown: breakdown} = detail;
   const enriched = results.map(result => {
@@ -202,6 +318,7 @@ function AssetDetail({detail, onProbe, onSaved, running}) {
       </div>)}
     </div>}
     <ProbeResults results={enriched} />
+    <RepairPanel asset={asset} breakdown={breakdown} onApplied={onSaved} />
     <FixPanel asset={asset} columns={columns} onSaved={onSaved} />
   </section>;
 }

@@ -83,6 +83,41 @@ report = client.get("/api/report").json()
 misleading = {item["asset"] for item in report["coverage_vs_risk"]["misleading_coverage"]}
 assert "stg_payments" in misleading, misleading
 
+# Repair gate over HTTP.
+client.post("/api/reset")
+client.post("/api/probe", json={"mode": "simulated"})
+
+accepted = client.post(
+    "/api/assets/fct_revenue/repair",
+    json={"column_name": "net_revenue", "strategy": "grounded", "mode": "simulated"},
+).json()
+assert accepted["verdict"] == "accepted", accepted
+assert accepted["dry_run"] is True
+assert accepted["fixed_count"] >= 1
+
+rejected = client.post(
+    "/api/assets/fct_revenue/repair",
+    json={"column_name": "net_revenue", "strategy": "verbose", "mode": "simulated"},
+).json()
+assert rejected["verdict"] == "rejected", rejected
+assert "salience" in rejected["reject_reason"]
+
+# A dry run must leave the catalog untouched, even over HTTP.
+detail_after = client.get("/api/assets/fct_revenue").json()
+net_revenue = next(c for c in detail_after["columns"] if c["name"] == "net_revenue")
+assert net_revenue["description"] == "Net revenue.", net_revenue
+
+assert client.post(
+    "/api/assets/fct_revenue/repair",
+    json={"column_name": "net_revenue", "strategy": "nonsense"},
+).status_code == 422
+assert client.post(
+    "/api/assets/fct_revenue/repair", json={"column_name": "no_such_column"}
+).status_code == 404
+
+sweep = client.post("/api/repair", json={"mode": "simulated"}).json()
+assert sweep["attempted"] == sweep["accepted"] + sweep["rejected"] + sweep["skipped"]
+
 client.post("/api/reset")
 restored = {item["asset_id"]: item for item in client.get("/api/queue").json()["queue"]}
 assert restored["dim_customer"]["risk"] == 0.0  # history cleared by reset
@@ -90,4 +125,6 @@ assert restored["dim_customer"]["risk"] == 0.0  # history cleared by reset
 print(f"catalog probe: 18 probes, engine={run['engine']}")
 print(f"dim_customer risk before fix = {before}, after fix = {after['dim_customer']['risk']}")
 print(f"misleading coverage assets: {sorted(misleading)}")
+print(f"repair gate: grounded={accepted['verdict']} verbose={rejected['verdict']} "
+      f"sweep accepted={sweep['accepted']}/{sweep['attempted']}")
 print("\nall API checks passed")

@@ -6,7 +6,15 @@ from . import answerer, catalog, risk
 from .grader import grade
 
 
-def run_probes(asset_id: str | None = None, mode: str = "auto") -> dict[str, Any]:
+def run_probes(
+    asset_id: str | None = None, mode: str = "auto", persist: bool = True
+) -> dict[str, Any]:
+    """Probe one asset or the whole catalog.
+
+    persist=False is used by the repair gate: a dry run must not write to
+    probe_results, otherwise the risk queue would flicker mid-evaluation and a
+    rejected candidate would leave its outcomes behind as if they were real.
+    """
     if mode not in {"auto", "simulated"}:
         raise ValueError("Mode must be auto or simulated")
     probes = catalog.get_probes(asset_id)
@@ -33,9 +41,11 @@ def run_probes(asset_id: str | None = None, mode: str = "auto") -> dict[str, Any
         results.append(grade(probe, response, facts_present))
         contexts[probe["id"]] = _describe_context(context, probe["column_name"])
 
-    risk.save_results(engine, results, contexts)
+    if persist:
+        risk.save_results(engine, results, contexts)
     return {
         "engine": engine,
+        "persisted": persist,
         "llm_fallbacks": fell_back,
         "probes_run": len(results),
         "results": results,

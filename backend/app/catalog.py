@@ -105,15 +105,32 @@ def build_context(asset_id: str, column_name: str | None) -> dict[str, Any]:
     }
 
 
+# Only the first N characters of a description are treated as reliably visible.
+#
+# This models attention decay. Atlan AI Labs measured a verbose 176-line metadata
+# variant performing 13.8% WORSE than a 64-line one on the same 522-query suite,
+# because prose written for humans reads as noise to a model. A fact buried past
+# this window is therefore treated as diluted rather than conveyed.
+#
+# Like the simulated answerer, this is a documented hypothesis, not evidence about
+# real models. Every description in the seeded fixture is well under this limit,
+# so it changes no baseline result; it only catches padded rewrites.
+SALIENCE_CHARS = 200
+
+
+def salient(description: str | None) -> str:
+    return (description or "")[:SALIENCE_CHARS]
+
+
 def context_text(context: dict[str, Any]) -> str:
-    """Documented text only.
+    """Documented text only, truncated to the salience window.
 
     Asset and column *names* are deliberately excluded. A fact that appears only
     in an identifier is not documentation, and treating it as such would credit
     the catalog for something an agent can only guess at.
     """
-    parts = [context["asset_description"] or ""]
-    parts.extend(column["description"] or "" for column in context["columns"])
+    parts = [salient(context["asset_description"])]
+    parts.extend(salient(column["description"]) for column in context["columns"])
     return " ".join(parts).lower()
 
 
@@ -126,6 +143,54 @@ def coverage(asset_id: str) -> dict[str, Any]:
         "described_columns": len(described),
         "column_coverage": round(len(described) / total, 3) if total else 1.0,
     }
+
+
+def upstream_assets(asset_id: str) -> list[str]:
+    with connect() as db:
+        rows = db.execute("SELECT upstream_id, downstream_id FROM lineage_edges").fetchall()
+    adjacency: dict[str, list[str]] = {}
+    for row in rows:
+        adjacency.setdefault(row["downstream_id"], []).append(row["upstream_id"])
+    found: list[str] = []
+    seen: set[str] = set()
+    queue = deque([asset_id])
+    while queue:
+        current = queue.popleft()
+        for neighbor in adjacency.get(current, []):
+            if neighbor not in seen:
+                seen.add(neighbor)
+                found.append(neighbor)
+                queue.append(neighbor)
+    return found
+
+
+def grounding_sources(asset_id: str, column_name: str) -> list[dict[str, Any]]:
+    """Documented text a rewrite is allowed to draw on.
+
+    Only the catalog's own content: upstream column descriptions reached through
+    lineage, sibling columns in the same asset, and the asset description.
+
+    Deliberately absent: the probe questions and their required terms. If a
+    generator could see those, it would insert the exact tokens the grader looks
+    for and every repair would pass by construction.
+    """
+    sources: list[dict[str, Any]] = []
+    asset = get_asset(asset_id)
+    if asset and (asset["description"] or "").strip():
+        sources.append({"origin": "asset", "asset": asset["name"], "column": None,
+                        "text": asset["description"]})
+    for column in get_columns(asset_id):
+        if column["name"] == column_name or not (column["description"] or "").strip():
+            continue
+        sources.append({"origin": "sibling", "asset": asset_id, "column": column["name"],
+                        "text": column["description"]})
+    for upstream_id in upstream_assets(asset_id):
+        for column in get_columns(upstream_id):
+            if not (column["description"] or "").strip():
+                continue
+            sources.append({"origin": "upstream", "asset": upstream_id,
+                            "column": column["name"], "text": column["description"]})
+    return sources
 
 
 def update_description(asset_id: str, column_name: str | None, description: str | None) -> None:
