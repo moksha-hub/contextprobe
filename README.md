@@ -2,7 +2,66 @@
 
 **Find the metadata that will break an AI agent — before the agent breaks.**
 
-A data catalog can report 92% description coverage and still hand an agent a description so vague that the agent invents an answer. Coverage counts whether a description exists. It cannot tell these apart:
+---
+
+## Start here — the whole idea in plain English
+
+Imagine a library where every book has a label on the spine. Management reports that 100% of books are labelled, so the catalogue looks healthy.
+
+Then you read the labels. One says *"Revenue Book."* Another says *"Quarterly revenue, in US dollars, excluding tax, as recognised on the shipping date."* Both are labels. Only one is any use.
+
+A person who reads the first label shrugs and asks a colleague. **An AI does not shrug.** It picks the most plausible interpretation and answers with total confidence — and now a wrong number is on an executive dashboard, and nobody knows why.
+
+That is the problem this project is about.
+
+### Why counting labels cannot find it
+
+Every data catalogue measures "coverage": the percentage of tables and columns that have a description written. It is a count of whether text exists. It cannot judge whether the text is *useful*.
+
+So the worst descriptions are invisible twice over:
+
+- the coverage number says they are done, and
+- the automated tools that write missing descriptions skip them, because a description is already there
+
+Nobody looks at them again. They just sit there, quietly waiting to mislead an agent.
+
+### What Contextprobe does instead
+
+It stops counting and starts **asking**.
+
+For each column, it writes down a few real questions a person would actually ask — *"Does this figure include tax?"*, *"Which currency is it in?"* — along with the correct answers, kept hidden. Then it hands an AI **only** what the catalogue says about that column, and asks.
+
+Three things can happen, and keeping them apart is the entire point:
+
+| What the AI does | Verdict | Why it matters |
+|---|---|---|
+| Answers correctly | fine | the description did its job |
+| Says *"the metadata doesn't say"* | **safe** | you lose ten seconds, and you trust nothing false |
+| Answers confidently and wrongly | **dangerous** | a wrong number gets used, and looks authoritative |
+
+Most testing lumps the last two together as "failed". They are opposites. Only the third one is scored.
+
+### Then it asks how much that failure would cost
+
+A useless description on a scratch table nobody reads is a shrug. The same failure on a column feeding the CFO's dashboard is a real problem. So each failure is weighted by how many things downstream depend on it, and the output is a to-do list in priority order — worst first.
+
+### And finally, it checks the fix
+
+Here is the part that surprises people: **rewriting a bad description can make things worse.** Longer is not better. Atlan measured this themselves — a padded version of the *same facts* made their AI 13.8% *less* accurate, because a wall of prose reads as noise to a machine.
+
+So Contextprobe never just accepts a rewrite. It proposes one, drafted only from what the catalogue already knows upstream, re-runs all the questions, and accepts it **only if** a broken question now works *and* nothing that used to work is now broken. Like a test suite, but for documentation.
+
+### The honest part
+
+I built this on an assumption: that a vague description would make an AI guess. Then I tested that assumption against a real model — and **I was wrong.** The model declined to answer instead, on every single question where I predicted it would guess.
+
+Which means my own risk numbers are too pessimistic, and the README says so. The full result, including the one case where the model *did* guess, is in [the study below](#measured-against-a-real-model--the-hypothesis-was-falsified) — and it turned up something genuinely counterintuitive: a **missing** description looked more dangerous than a vague one.
+
+---
+
+## The concrete example
+
+Coverage cannot tell these two apart. Both are documented, both live in the same table, and both were asked the same four questions:
 
 ```text
 net_revenue    "Net revenue."                                        <- covered, unusable
@@ -10,17 +69,34 @@ gross_revenue  "Gross revenue in USD before returns, refunds and
                 tax; recognized at order date."                      <- covered, usable
 ```
 
-Contextprobe asks a different question. Not *"does this asset have a description?"* but *"can an agent answer a real question using only this description — and does it know when it can't?"*
+| Column | Documented | Answered correctly | Confidently wrong |
+|---|---|---:|---:|
+| `net_revenue` | yes | 0 / 4 | **4 / 4** |
+| `gross_revenue` | yes | 4 / 4 | 0 / 4 |
+
+Identical coverage score. Opposite outcomes.
 
 ## System design
 
-![Contextprobe system design blueprint](docs/architecture.svg)
+Three blueprint sheets. Read them in order — the first is the shape of the system, the second is how a verdict is reached, the third is how a fix gets verified.
 
-The two dashed zones are the point of the whole design. Anything inside the red zone is allowed to be wrong, because it is being measured. Everything inside the green zone decides what the answer *means*, and it is all ordinary deterministic code.
+### Sheet 1 — the system, end to end
 
-![Contextprobe internals, scoring and measured output](docs/internals.svg)
+![Contextprobe system design blueprint: seven layers from the React dashboard through FastAPI, the probe runner, the two answerers, the deterministic grading and risk zone, SQLite persistence, and the repair gate loop](docs/architecture.svg)
 
-![Contextprobe repair gate](docs/repair-gate.svg)
+The two dashed zones carry the whole argument. Inside the **red** zone the model is allowed to be wrong, because that is what is being measured. Inside the **green** zone every verdict is reached by ordinary deterministic code — grading, lineage traversal, blast-radius maths, ranking. The model is the *subject* of the experiment, never the judge of it.
+
+### Sheet 2 — how a verdict is reached
+
+![Contextprobe internals: the five SQLite tables, the simulated answerer's four ordered rules as a decision tree, three-way grading, the measured risk queue, the controlled pair, and the falsification result](docs/internals.svg)
+
+Covers the data model, the answerer's decision rules in order, the three outcomes, the measured risk queue, and what the real-model study did to the hypothesis.
+
+### Sheet 3 — how a fix is verified
+
+![Contextprobe repair gate: why a gate is needed, the population no other tool touches, the seven-step dry-run loop, the three verdict paths, the measured accept rate, and the limits](docs/repair-gate.svg)
+
+The repair gate: why verification is necessary rather than decorative, the dry-run loop, the three verdict paths, and the measured accept rate of 1 in 3.
 
 ## What it does
 
@@ -401,13 +477,72 @@ Then the gate, on `fct_revenue`:
 
 **Rejected:** an LLM judge (it would make the model both subject and judge); embeddings for grading (unjustifiable complexity at 18 probes with short answers); a real warehouse connector (reproducibility matters more here than realism); auto-committing accepted repairs (answerability is not truth — a steward has to confirm the wording); a vector store, an agent framework, and multi-tenancy (none earn their weight at this scale).
 
-## Prior art, verified
+## The sources this is built on, and what each one says
 
-I checked this against Atlan's published material rather than assuming novelty. Two things came back.
+Every design decision here traces to something Atlan published. Reading these first makes the rest of the project obvious.
 
-**Measuring metadata quality by probing an agent is not new — Atlan already published it.** [Atlan AI Labs](https://atlan.com/know/enhanced-metadata-improves-query-accuracy/) ran 174 queries three times each (522 evaluations) on a 13-table Formula One dataset, holding the model constant and varying only metadata quality. Win rate went from 16.1% to 22.2%: a 38% relative lift at p < 0.0001, with a 2.15x gain on medium-complexity queries. Their illustrative failure is almost this project's `net_revenue` case — an agent asked which drivers were eliminated, found no `eliminated` column, and produced confident, plausible, wrong SQL.
+### 1. Metadata quality is measurable, and worth 38%
 
-So this project does not claim that idea. What differs is narrower:
+[How We Proved Metadata Delivers 38% Better AI Accuracy](https://atlan.com/know/enhanced-metadata-improves-query-accuracy/) — Atlan AI Labs
+
+They took 174 questions, ran each three times (522 evaluations) against a 13-table Formula One dataset, and changed **only** the metadata quality. Bare schema gave a 16.1% success rate. Schema plus glossaries, usage patterns and domain hints gave 22.2% — a 38% relative lift at p < 0.0001.
+
+Their illustrative failure is worth quoting in spirit: asked which drivers were *eliminated*, the agent found no column called "eliminated", assumed it meant missing data, and produced confident, syntactically perfect, completely wrong SQL.
+
+**Why it matters here:** this is the closest prior art to Contextprobe, and it predates it. Measuring metadata quality by observing how an agent fails is *their* published idea, at larger scale, with statistics. This project does not claim it. What it adds is attributing the failure to a *specific column* and turning that into a ranked repair queue.
+
+### 2. More words can make it worse
+
+Same study, the finding most people miss. They also tested a **verbose** version of the identical facts — 176 lines instead of 64. It scored 13.8% *worse* and cost 52% more. The cause is attention decay: prose written for human readers reads as noise to a model.
+
+**Why it matters here:** this is the single justification for the repair gate. If editing a description could only help, you would just edit it. Because it can regress, an edit needs a test. It is also why the harness models a 200-character salience window and rejects padded rewrites.
+
+### 3. AI never overwrites an existing description
+
+Four separate documentation pages state the same rule: context agents enrich only assets *missing* the target attribute, and existing values are never overwritten.
+
+- [Metadata enrichment FAQ](https://docs.atlan.com/product/capabilities/governance/context-agents-studio/faq/metadata-enrichment)
+- [Context agents concepts](https://docs.atlan.com/product/capabilities/governance/context-agents-studio/concepts/agents)
+- [Enrich metadata on collections](https://docs.atlan.com/product/capabilities/governance/context-agents-studio/how-tos/enrich-metadata-on-asset-collection)
+- [Enrich metadata at scale](https://docs.atlan.com/product/capabilities/governance/context-agents-studio/best-practices/enrich-metadata-at-scale)
+
+The same FAQ defines coverage as a fill-rate — 60 of 100 assets with a description gives 60% — and notes that collections count parent assets, not columns. Its troubleshooting entry for *"the agent runs but generates 0 descriptions"* gives the cause as every asset already having one.
+
+**Why it matters here:** this is the blind spot, stated by the vendor. `"Net revenue."` counts as fully covered, is skipped by enrichment by design, and is only ever caught if a human happens to get confused and reports it. That is the exact population this project targets. The rule itself is sensible — you do not want a machine overwriting curated work — but it does leave that set unattended.
+
+### 4. Confidence is not accuracy
+
+[Loop Engineering in Production: Putting AI Agents on Call](https://blog.atlan.com/engineering/loop-engineering-in-production-putting-ai-agents-on-call/) — on Sherlock, their incident investigation agent
+
+The sharpest line in it: a model's confidence measures how *clean the evidence looked*, never whether the conclusion was right. A familiar-looking incident can score high and still point at the wrong cause. Their answer is organisational — a human reviews every conclusion before it drives an action.
+
+**Why it matters here:** that is a correct mitigation, not a measurement. Contextprobe turns the same insight into a metric by separating a safe abstention from a confident wrong answer and scoring only the second.
+
+### 5. The open question this project answers a small piece of
+
+[The Feedback Loop: Improving the Quality of Context for Humans and AI](https://blog.atlan.com/community/metadata-feedback-loop-context-layer/)
+
+Their loop captures **human** signals: a thumbs-down plus a reason such as "description incomplete". Across 13 organisations it gathered 750+ signals in a month. A key stated learning is that coverage does not equal usefulness — the opening anecdote is a description that just repeats the title.
+
+Then it closes by asking, openly, what the loop looks like when **agents** close it too — naming a failed query and a hallucinated answer as the signals still to capture.
+
+**Why it matters here:** their loop is reactive; it needs somebody to get confused first. Contextprobe provokes the failure deliberately, before deployment. That is the small piece of their open question this addresses.
+
+### 6. The closest thing to a gate that already exists
+
+[Why AI Agents Need Versioned Context](https://atlan.com/know/ai-agent/context-versioning-for-ai-agents)
+
+Context products are described as versioned bundles carrying a definition, lineage, policies, certifications and **test cases**, promoted through sandbox → staging → production with validation against a staging query set.
+
+**Why it matters here:** worth knowing before pitching. A gate concept does exist — for versioned context bundles moving through governance promotion. What does not exist is a gate on an individual column description edit, applied to the vague-but-present population that enrichment skips. Know that distinction; a sharp reviewer will raise it.
+
+## What is actually new here, and what is not
+
+Given all of the above, the honest accounting.
+
+**Not new:** measuring metadata quality by observing how an agent fails with it. Atlan AI Labs published that with 522 evaluations and a p-value before this existed. This project does not claim it.
+
+**Narrower, and not published as far as I can find:**
 
 | | Atlan (published) | Contextprobe |
 |---|---|---|
@@ -417,13 +552,9 @@ So this project does not claim that idea. What differs is narrower:
 | Prioritisation | query complexity, consumption layer | failure rate × downstream blast radius |
 | After measuring | — | a gate that verifies the rewrite |
 
-**The blind spot is real and current.** Four separate Atlan doc pages state that context agents only enrich assets *missing* the target attribute and that existing values are never overwritten ([FAQ](https://docs.atlan.com/product/capabilities/governance/context-agents-studio/faq/metadata-enrichment), [concepts](https://docs.atlan.com/product/capabilities/governance/context-agents-studio/concepts/agents), [how-to](https://docs.atlan.com/product/capabilities/governance/context-agents-studio/how-tos/enrich-metadata-on-asset-collection), [best practices](https://docs.atlan.com/product/capabilities/governance/context-agents-studio/best-practices/enrich-metadata-at-scale)). The same FAQ defines coverage as a fill-rate — 60 of 100 assets with a description gives 60% — and notes that collections count parent assets, not columns. Their troubleshooting entry for "the agent runs but generates 0 descriptions" gives the cause as every asset already having one.
+This is far smaller than anything Atlan runs in production — 12 assets against 500+ customer environments. The contribution is the unit of measurement and the verification step, not the scale.
 
-Put together: `"Net revenue."` counts as fully covered, is skipped by enrichment by design, and is only caught if a human happens to get confused and report it. That is the population this project targets, and the repair gate is what lets an edit to it be verified rather than trusted.
-
-Their [metadata feedback loop](https://blog.atlan.com/community/metadata-feedback-loop-context-layer/) captures human signals today, and that post closes by asking openly what the loop looks like when agents close it too — naming a hallucinated answer as a signal still to capture. Their [Sherlock post](https://blog.atlan.com/engineering/loop-engineering-in-production-putting-ai-agents-on-call/) states the related constraint plainly: confidence is not accuracy.
-
-This is far smaller than anything they run in production. The contribution is the unit of measurement and the verification step, not the scale.
+And one caveat worth stating plainly: absence of evidence in public documentation is not proof of absence internally. Atlan may well have built some of this already and not written it up.
 
 ## License
 

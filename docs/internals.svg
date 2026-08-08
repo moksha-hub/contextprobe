@@ -21,7 +21,7 @@
   </g>
   <text x="182" y="76" font-size="32" font-weight="bold" fill="#23201c">CONTEXTPROBE &#8212; INTERNALS &amp; MEASUREMENT</text>
   <text x="182" y="106" font-size="18" fill="#5f5a52">data model, the 3-way decision, scoring, and worked numbers from the fixture</text>
-  <text x="1130" y="106" font-size="15" fill="#b03a2e">sheet 2 of 2</text>
+  <text x="1130" y="106" font-size="15" fill="#b03a2e">sheet 2 of 3</text>
 
   <!-- ===== DATA MODEL ===== -->
   <text x="164" y="168" font-size="21" font-weight="bold" fill="#1f4e79">A &#183; DATA MODEL (SQLite, 5 tables)</text>
