@@ -25,8 +25,9 @@ Coverage counts whether text **exists**. It cannot judge whether the text is **u
 Contextprobe treats a description like code: something you can write a test for.
 
 ```
-1. WRITE      a few real questions per column, with known answers.
-              The answers stay hidden.
+1. I WRITE    a few real questions per column, with known answers.
+              By hand — see the limitation in section 12.
+              The answers stay hidden from the AI.
 
 2. SHOW       the AI nothing except what the catalogue says about
               that column. No hints, no ground truth.
@@ -37,6 +38,8 @@ Contextprobe treats a description like code: something you can write a test for.
 
 5. VERIFY     any proposed rewrite by re-running every question.
 ```
+
+Step 1 is manual. All 18 probes are hardcoded in `backend/app/database.py`, and that is the project's main ceiling — the tool does not generate its own questions.
 
 ### The three buckets
 
@@ -324,18 +327,60 @@ Absence from public documentation is not proof of absence internally. Atlan may 
 
 ---
 
-## 12. Scope and limits
+## 12. Limitations
 
-- 12 assets and 18 probes is demo scale. It demonstrates a method, not an industry finding.
-- The catalogue and ground truth are author-written, so the system and its benchmark share assumptions.
-- Section 4's risk numbers come from the hypothesis engine and **overstate the danger** — section 5 measured that.
-- The real-model study is one small model and 26 evaluations.
-- Grading matches on keywords in short answers. It would not survive long free-form responses without semantic matching.
-- The salience window (200 characters) is a chosen threshold modelling attention decay, not a measured property of any model.
-- Risk weights, including 1.5× for certified assets, are chosen, not calibrated.
-- The gate checks answerability, not truth.
-- No authentication, no multi-tenancy, no real warehouse connector, no migrations.
-- Probes are hand-written per column, so they miss business context a human would know to ask about.
+Listed worst first. Several of these are the reason this is a demonstration rather than a tool anyone should deploy.
+
+### It does not scale, because probes are hand-written
+
+All 18 probes are typed by hand into `database.py`. A real catalogue has 100,000+ columns; four questions each is 400,000 probes. Nobody writes those.
+
+The fix is two-sided and neither half is built:
+
+- **Questions** could be templated from data type and name pattern — a `*_revenue` decimal gets asked about currency, tax and recognition date; a `*_at` timestamp gets asked about timezone.
+- **Ground truth** would have to be *derived* rather than authored — from transformation SQL, dbt tests, or the data profile. If a model computes `gross_revenue - refunds`, then "are refunds deducted?" answers itself.
+
+Deriving the answer also removes a circularity: right now a human writes both the question and its answer.
+
+### The risk numbers in section 4 are not measured behaviour
+
+They come from the hypothesis engine, and section 5 showed that hypothesis is wrong. The ranking mechanism is what section 4 demonstrates. The severity is overstated.
+
+### The real-model study is thin
+
+One small free-tier model, 26 usable evaluations of 36 attempted, 42 rate-limit responses. Two probes gave different answers across runs. The headline finding — that an empty description was the dangerous case — rests on a single probe in a single run that did not reproduce in the second. It is a lead, not a result.
+
+### Grading is keyword matching
+
+`matches_expected` looks for substrings in short answers. It cannot detect inverted meaning, and it would fall apart on long free-form replies without semantic comparison. `selfcheck.py` exists precisely because this is fragile — it caught a wrong answer being graded correct because `"not deducted"` contains `"deduct"`.
+
+### A description could be gamed
+
+Stuff the required keywords into a description and it passes without becoming clearer to a human. Resisting that needs a held-out probe set the author of the description has never seen.
+
+### The repair gate checks answerability, not truth
+
+The accepted rewrite inherits *"before returns, refunds and tax"* from a sibling column, where it is correct. For net revenue, measured *after* refunds, it is wrong. Keyword matching cannot see the inverted polarity. The gate would approve a confidently false description.
+
+### Chosen constants, not calibrated ones
+
+The 200-character salience window, the 1.5× certified multiplier, and the `(1 + downstream)` weighting were all picked by judgement on a 12-asset fixture. None is fitted to data.
+
+### The benchmark and the system share an author
+
+I wrote the catalogue, the probes, the ground truth and the scoring. They share my assumptions about what a good description looks like. An independent probe set written by someone else would be a much stronger test.
+
+### The fixture is synthetic
+
+12 assets, 11 columns, 9 lineage edges, invented descriptions. No warehouse connector, no dbt artifacts, no real query history. Nothing here has met production data.
+
+### Provider dependence in LLM mode
+
+The adapter negotiates JSON mode and retries rate limits, but a probe that fails still falls back to the simulated engine. `llmstudy.py` excludes those, so a bad connection produces a smaller study rather than a wrong one — but it does silently shrink the sample.
+
+### Not production software
+
+No authentication, no authorisation, no multi-tenancy, no migrations, no rate limiting, no deployment configuration. SQLite is single-writer. The repair gate mutates a description in place during a dry run and restores it in a `finally` block — safe single-threaded, unsafe under concurrent edits.
 
 ## License
 
