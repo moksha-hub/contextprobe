@@ -45,18 +45,18 @@
   <text x="182" y="380" font-size="13.5" fill="#23201c">coverage is a FILL-RATE &#8594; counts as 100% covered</text>
   <text x="182" y="404" font-size="13.5" fill="#23201c">enrichment agents SKIP assets that already have a</text>
   <text x="182" y="424" font-size="13.5" fill="#23201c">description &#8594; never revisited, by design</text>
-  <text x="182" y="450" font-size="13.5" fill="#b03a2e">so it is invisible to the metric AND to the agent.</text>
-  <text x="182" y="470" font-size="12.5" fill="#5f5a52">4 separate Atlan doc pages state the skip behaviour.</text>
+  <text x="182" y="450" font-size="13.5" fill="#b03a2e">a human or the SDK can still edit it &#8212; but nothing</text>
+  <text x="182" y="468" font-size="13.5" fill="#b03a2e">AUTOMATICALLY flags it as worth editing.</text>
 
   <g transform="rotate(0.3 960 400)">
     <rect x="668" y="322" width="612" height="156" rx="8" fill="#fff" stroke="#23201c" stroke-width="2.4"/>
   </g>
-  <text x="688" y="350" font-size="16" font-weight="bold" fill="#1f4e79">THE THREE-WAY BLIND SPOT</text>
+  <text x="688" y="350" font-size="16" font-weight="bold" fill="#1f4e79">WHO REVISITS IT AUTOMATICALLY?  NOBODY</text>
   <text x="688" y="378" font-size="13.5" fill="#23201c">a coverage dashboard&#8194;&#8194;&#8594; "documented, done"</text>
   <text x="688" y="402" font-size="13.5" fill="#23201c">an enrichment agent&#8194;&#8194;&#8594; "already filled, skip"</text>
-  <text x="688" y="426" font-size="13.5" fill="#23201c">a human feedback loop &#8594; only if someone happens</text>
-  <text x="688" y="446" font-size="13.5" fill="#23201c">&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;to get confused and report it</text>
-  <text x="688" y="470" font-size="13" fill="#2e6b4f">the gate operates precisely on this set.</text>
+  <text x="688" y="426" font-size="13.5" fill="#23201c">a human feedback loop &#8594; only once someone gets</text>
+  <text x="688" y="446" font-size="13.5" fill="#23201c">&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;confused and reports it</text>
+  <text x="688" y="470" font-size="12.5" fill="#b03a2e">NOT a bug: never overwriting human work is a deliberate safety choice.</text>
 
   <!-- THE LOOP -->
   <text x="164" y="530" font-size="21" font-weight="bold" fill="#1f4e79">B &#183; THE LOOP &#8212; strictly a dry run</text>
