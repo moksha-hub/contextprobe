@@ -89,10 +89,15 @@ for word in ("tax", "refund", "usd"):
               f"'{word}' appeared in the candidate but not in the grounding it cited")
 
 # 7. Catalog-wide sweep reports an honest accept rate.
+#    The exact 1-of-3 figure is quoted outside this repository, so it is pinned
+#    here: if the fixture or the gate changes, this fails instead of the claim
+#    silently going stale.
 sweep = repair_all("simulated")
 check(sweep["attempted"] > 0, "sweep should attempt at least one repair")
 check(sweep["accepted"] + sweep["rejected"] + sweep["skipped"] == sweep["attempted"],
       "sweep verdict counts must sum to attempts")
+check((sweep["accepted"], sweep["attempted"]) == (1, 3),
+      f"documented sweep is 1 of 3 accepted, got {sweep['accepted']} of {sweep['attempted']}")
 
 print(f"grounded  verdict={grounded['verdict']:<9} fixed={grounded['fixed_count']} "
       f"regressed={grounded['regressed_count']} len={grounded['candidate_length']}")

@@ -1,4 +1,4 @@
-import {useEffect, useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {api, send} from './api.js';
 import Playground from './Playground.jsx';
 
@@ -351,9 +351,15 @@ export default function App() {
     setPair(data.paired_comparison);
   }
 
+  // Clicking through the queue quickly can resolve responses out of order; only
+  // the most recently requested asset may write to state.
+  const latestRequest = useRef('');
+
   async function loadDetail(assetId) {
     if (!assetId) return;
-    setDetail(await api(`/assets/${assetId}`));
+    latestRequest.current = assetId;
+    const data = await api(`/assets/${assetId}`);
+    if (latestRequest.current === assetId) setDetail(data);
   }
 
   useEffect(() => {

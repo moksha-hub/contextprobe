@@ -26,7 +26,7 @@ Contextprobe treats a description like code: something you can write a test for.
 
 ```
 1. I WRITE    a few real questions per column, with known answers.
-              By hand — see the limitation in section 12.
+              By hand — see the limitation in section 13.
               The answers stay hidden from the AI.
 
 2. SHOW       the AI nothing except what the catalogue says about
@@ -198,7 +198,7 @@ The two dashed zones carry the argument. Inside the **red** zone the model is al
 
 ---
 
-## Browser playground
+## 8. Browser playground
 
 The top panel accepts user input; no terminal commands or fixture edits are needed:
 
@@ -211,7 +211,7 @@ The top panel accepts user input; no terminal commands or fixture edits are need
 
 The result shows the answer, actual engine, context seen, matched markers, three-way outcome, risk, and before/after comparison. Playground requests are stateless and never read from or write to the SQLite fixture.
 
-## 8. Run locally
+## 9. Run locally
 
 Requirements: Windows, Python 3.10+, and Node.js 20+.
 
@@ -279,7 +279,7 @@ cd ..
 
 ---
 
-## 9. Verify
+## 10. Verify
 
 ```cmd
 py backend\selfcheck.py    :: fixture and grader invariants
@@ -305,7 +305,7 @@ These tests are adversarial toward the project itself, and they caught six real 
 
 ---
 
-## 10. API
+## 11. API
 
 | Endpoint | Purpose |
 |---|---|
@@ -325,7 +325,7 @@ Deeper detail — data model, scoring rules, rejected alternatives — is in [DE
 
 ---
 
-## 11. Where this came from
+## 12. Where this came from
 
 Every design decision traces to something Atlan published.
 
@@ -363,7 +363,7 @@ Absence from public documentation is not proof of absence internally. Atlan may 
 
 ---
 
-## 12. Limitations
+## 13. Limitations
 
 Listed worst first. Several of these are the reason this is a demonstration rather than a tool anyone should deploy.
 
