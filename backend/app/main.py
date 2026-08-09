@@ -1,14 +1,26 @@
 import os
 import sqlite3
 from contextlib import asynccontextmanager
+from pathlib import Path
+from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import answerer, catalog, repair, report, risk, runner
-from .database import initialize, reset_fixture
+from . import env
+
+env.load()
+
+from . import answerer, catalog, repair, report, risk, runner  # noqa: E402
+from .database import initialize, reset_fixture  # noqa: E402
+from .playground import (  # noqa: E402
+    PlaygroundRequest,
+    PlaygroundUnavailable,
+    run_playground,
+)
 
 
 @asynccontextmanager
@@ -19,8 +31,8 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(
     title="Contextprobe",
-    description="Find the metadata that will break an AI agent, ranked by blast radius.",
-    version="1.0.0",
+    description="Test whether catalog metadata is usable by an AI, then compare a rewrite.",
+    version="1.1.0",
     lifespan=lifespan,
 )
 app.add_middleware(
@@ -35,33 +47,49 @@ app.add_middleware(
 async def catalog_unavailable(_: Request, __: sqlite3.Error) -> JSONResponse:
     return JSONResponse(
         status_code=503,
-        content={"detail": "The catalog store is unavailable; no probe results were produced."},
+        content={"detail": "The catalog store is unavailable; no results were produced."},
     )
 
 
 class ProbeRequest(BaseModel):
-    mode: str = "auto"
+    mode: Literal["auto", "simulated"] = "auto"
 
 
 class DescriptionUpdate(BaseModel):
-    column_name: str | None = None
+    column_name: str | None = Field(default=None, min_length=1, max_length=128)
     description: str | None = Field(default=None, max_length=2000)
 
 
 class RepairRequest(BaseModel):
-    column_name: str
-    strategy: str = "grounded"
-    mode: str = "auto"
+    column_name: str = Field(min_length=1, max_length=128)
+    strategy: Literal["grounded", "verbose", "narrow"] = "grounded"
+    mode: Literal["auto", "simulated"] = "auto"
 
 
 @app.get("/health")
 def health() -> dict:
-    return {"status": "ok", "llm_configured": answerer.llm_available()}
+    return {
+        "status": "ok",
+        "llm_configured": answerer.llm_available(),
+    }
+
+
+@app.post("/api/playground")
+def playground_probe(payload: PlaygroundRequest) -> dict:
+    try:
+        return run_playground(payload)
+    except PlaygroundUnavailable as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
 
 
 @app.get("/api/queue")
 def metadata_risk_queue() -> dict:
-    return {"engine_available": answerer.llm_available(), "queue": risk.risk_queue()}
+    return {
+        "engine_available": answerer.llm_available(),
+        "queue": risk.risk_queue(),
+    }
 
 
 @app.get("/api/assets/{asset_id}")
@@ -136,10 +164,20 @@ def repair_catalog(request: ProbeRequest) -> dict:
 
 @app.get("/api/report")
 def coverage_report() -> dict:
-    return {"coverage_vs_risk": report.coverage_vs_risk(), "paired_comparison": report.paired_comparison()}
+    return {
+        "coverage_vs_risk": report.coverage_vs_risk(),
+        "paired_comparison": report.paired_comparison(),
+    }
 
 
 @app.post("/api/reset")
 def reset() -> dict:
     reset_fixture()
     return {"reset": True}
+
+
+# Serve the built React app from the same local process. Mount last so browser
+# routes cannot shadow /health or /api.
+FRONTEND_DIST = Path(__file__).resolve().parents[2] / "frontend" / "dist"
+if FRONTEND_DIST.exists():
+    app.mount("/", StaticFiles(directory=FRONTEND_DIST, html=True), name="frontend")

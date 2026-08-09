@@ -1,5 +1,6 @@
 import {useEffect, useState} from 'react';
 import {api, send} from './api.js';
+import Playground from './Playground.jsx';
 
 const OUTCOME_LABEL = {
   correct: 'Correct',
@@ -20,7 +21,7 @@ function Header({engineAvailable, onProbeAll, running}) {
     <div className="topbar-actions">
       <span className="engine-pill">
         <i className={engineAvailable ? 'live' : ''} />
-        {engineAvailable ? 'LLM answerer configured' : 'Simulated answerer'}
+        {engineAvailable ? 'Real model ready in playground' : 'Simulation only'}
       </span>
       <button className="primary" onClick={onProbeAll} disabled={running}>
         {running ? 'Probing catalog…' : 'Probe whole catalog'}
@@ -123,6 +124,12 @@ function FixPanel({asset, columns, onSaved}) {
   const [draft, setDraft] = useState(targets[0].current || '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    setTarget(targets[0].value);
+    setDraft(targets[0].current || '');
+    setError('');
+  }, [asset.id]);
 
   function pick(value) {
     setTarget(value);
@@ -400,6 +407,7 @@ export default function App() {
   return <div className="app">
     <Header engineAvailable={engineAvailable} onProbeAll={probeAll} running={running} />
     {error && <p className="error" role="alert">{error}</p>}
+    <Playground engineAvailable={engineAvailable} />
     <PairedComparison pair={pair} />
     <div className="layout">
       <RiskQueue queue={queue} selectedId={selectedId} onSelect={setSelectedId} />

@@ -10,7 +10,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from fastapi.testclient import TestClient  # noqa: E402
 
-from app.database import initialize, reset_fixture  # noqa: E402
+from app import answerer  # noqa: E402
+from app.database import connect, initialize, reset_fixture  # noqa: E402
+import app.main as main_module  # noqa: E402
 from app.main import app  # noqa: E402
 
 initialize()
@@ -19,6 +21,67 @@ client = TestClient(app)
 
 health = client.get("/health").json()
 assert health["status"] == "ok", health
+
+# A production build serves the SPA without shadowing API routes.
+if (main_module.FRONTEND_DIST / "index.html").exists():
+    root = client.get("/")
+    assert root.status_code == 200, root.text
+    assert '<div id="root"></div>' in root.text
+    assert client.get("/health").headers["content-type"].startswith("application/json")
+
+# Browser playground: user input is evaluated without touching fixture storage.
+def stored_counts() -> tuple[int, int]:
+    with connect() as db:
+        return (
+            db.execute("SELECT COUNT(*) FROM probe_results").fetchone()[0],
+            db.execute("SELECT COUNT(*) FROM repairs").fetchone()[0],
+        )
+
+
+playground_before = stored_counts()
+playground_payload = {
+    "column_name": "net_revenue",
+    "description": "Net revenue.",
+    "question": "Does net_revenue include tax?",
+    "expected_answer": "No. Net revenue excludes tax.",
+    "required_terms": "tax, excl",
+    "correct_markers": "no, excl",
+    "proposed_rewrite": "Net revenue in USD after refunds, excluding tax.",
+    "mode": "simulated",
+    "downstream_count": 2,
+    "certified": True,
+}
+playground_response = client.post("/api/playground", json=playground_payload)
+assert playground_response.status_code == 200, playground_response.text
+playground = playground_response.json()
+assert playground["original"]["outcome"] == "confident_wrong", playground
+assert playground["original"]["risk"] == 4.5, playground
+assert playground["rewrite"]["outcome"] == "correct", playground
+assert playground["rewrite"]["risk"] == 0.0, playground
+assert playground["comparison"]["transition"] == "fixed", playground
+assert playground_before == stored_counts(), "playground must not persist results"
+
+single = dict(playground_payload)
+single["proposed_rewrite"] = ""
+single_response = client.post("/api/playground", json=single)
+assert single_response.status_code == 200
+assert single_response.json()["rewrite"] is None
+assert single_response.json()["comparison"] is None
+
+invalid = dict(playground_payload)
+invalid["correct_markers"] = " , "
+assert client.post("/api/playground", json=invalid).status_code == 422
+invalid = dict(playground_payload)
+invalid["downstream_count"] = -1
+assert client.post("/api/playground", json=invalid).status_code == 422
+
+# Explicit LLM mode fails clearly when no provider is configured, without a call.
+original_llm_available = answerer.llm_available
+answerer.llm_available = lambda: False
+llm_only = dict(playground_payload)
+llm_only["mode"] = "llm"
+assert client.post("/api/playground", json=llm_only).status_code == 503
+answerer.llm_available = original_llm_available
 
 # Probe the whole catalog.
 run = client.post("/api/probe", json={"mode": "simulated"}).json()

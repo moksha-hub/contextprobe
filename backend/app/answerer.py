@@ -96,6 +96,9 @@ FENCE = re.compile(r"^\s*```(?:json)?\s*|\s*```\s*$", re.IGNORECASE)
 
 
 def llm_available() -> bool:
+    simulation_only = os.getenv("CONTEXTPROBE_SIMULATION_ONLY", "false").lower()
+    if simulation_only in {"1", "true", "yes"}:
+        return False
     return bool(os.getenv("LLM_API_KEY") and os.getenv("LLM_MODEL"))
 
 
@@ -133,7 +136,9 @@ def _parse(content: str) -> dict[str, Any]:
     return {"answer": cleaned, "abstained": False, "reason": "llm_prose"}
 
 
-def llm_answer(probe: dict[str, Any], context: dict[str, Any]) -> dict[str, Any] | None:
+def llm_answer(
+    probe: dict[str, Any], context: dict[str, Any]
+) -> dict[str, Any] | None:
     """Ask a real model the same question. Returns None when unavailable or failing."""
     global _json_mode_supported
     if not llm_available():
@@ -147,7 +152,10 @@ def llm_answer(probe: dict[str, Any], context: dict[str, Any]) -> dict[str, Any]
         },
     ]
 
-    delay = float(os.getenv("LLM_DELAY_SECONDS", "0.6"))
+    try:
+        delay = max(float(os.getenv("LLM_DELAY_SECONDS", "0.6")), 0.0)
+    except ValueError:
+        delay = 0.6
     attempt = 0
     while attempt < MAX_ATTEMPTS:
         attempt += 1

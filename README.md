@@ -198,49 +198,84 @@ The two dashed zones carry the argument. Inside the **red** zone the model is al
 
 ---
 
-## 8. Run it
+## Browser playground
 
-Python 3.10+, Node 20+.
+The top panel accepts user input; no terminal commands or fixture edits are needed:
+
+- **Column name and current description** — the exact catalog context shown to the model.
+- **Question** — what the model must answer using only that description.
+- **Expected answer and correct markers** — hidden from the model and used only by deterministic grading.
+- **Required context terms** — the facts that must be documented for the simulator's transparent answerability check.
+- **Optional rewrite** — evaluates the same question again and reports fixed, made-safe, regressed, or unchanged.
+- **Downstream count and certification** — demonstrate the one-probe blast-radius score.
+
+The result shows the answer, actual engine, context seen, matched markers, three-way outcome, risk, and before/after comparison. Playground requests are stateless and never read from or write to the SQLite fixture.
+
+## 8. Run locally
+
+Requirements: Windows, Python 3.10+, and Node.js 20+.
+
+### One command
+
+From this folder, double-click `start_contextprobe.cmd`, or run:
 
 ```cmd
-py -m venv .venv
-.venv\Scripts\python -m pip install -r backend\requirements.txt
-.venv\Scripts\python -m uvicorn app.main:app --app-dir backend --reload
+start_contextprobe.cmd
 ```
+
+The first run creates `.venv`, installs dependencies, builds the React interface, opens the browser, and starts the app. Later runs reuse the installed dependencies.
+
+- App: `http://127.0.0.1:8000`
+- API documentation: `http://127.0.0.1:8000/docs`
+- Stop: press `Ctrl+C` in the launcher window.
+- Start with a clean synthetic fixture:
 
 ```cmd
-cd frontend
-npm install
-npm run dev
+start_contextprobe.cmd reset
 ```
 
-Open `http://localhost:5173`. API docs at `http://localhost:8000/docs`. SQLite seeds itself on first start.
+### Optional real model
 
-### Optional: use a real model
+The app works without a key by using the transparent simulator. For real-model mode, copy `.env.example` to `.env` and add a **new, private** provider key:
 
-Copy `.env.example` to `.env` (gitignored):
+```cmd
+copy .env.example .env
+```
 
 ```ini
-LLM_API_KEY=your-key
+LLM_API_KEY=your-new-key
 LLM_MODEL=inclusionai/ling-3.0-tiny:free
 LLM_BASE_URL=https://openrouter.ai/api/v1
 LLM_DELAY_SECONDS=1.5
 ```
 
+Never commit `.env`. Normal startup deliberately stays in simulation mode so an old key cannot be used accidentally. After rotating and configuring the key, start real-model mode explicitly:
+
 ```cmd
-py backend\llmcheck.py     :: connectivity and JSON-mode support
-py backend\llmstudy.py 2   :: run twice, compare against the hypothesis
+start_contextprobe.cmd real
 ```
 
-Any OpenAI-compatible provider works. The adapter negotiates JSON mode down when a provider rejects it, grades plain-prose replies, and retries rate limits with backoff. If a call fails, that probe falls back to the simulated engine — and the study **excludes** those probes rather than passing simulated output off as a model result.
+The header must say **Real model ready in playground** before choosing real-model mode.
 
-### A five-step demo
+### Manual fallback
 
-1. Click **Probe whole catalog**.
-2. Read the controlled pair: two documented columns, 0/4 against 4/4.
-3. Open `dim_customer` — 100% coverage, top of the queue.
-4. In **Repair gate**, run `grounded` (accepted), then `verbose` (rejected — buried).
-5. Open `legacy_customers` — fully documented, admits it's unverified, scores zero.
+```cmd
+py -m venv .venv
+.venv\Scripts\python -m pip install -r backend\requirements.txt
+cd frontend
+npm ci
+npm run build
+cd ..
+.venv\Scripts\python -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000
+```
+
+### Five-step demo
+
+1. Use the top playground with the prefilled `net_revenue` example and run the current-description/rewrite comparison.
+2. Click **Probe whole catalog**.
+3. Read the controlled pair: two documented columns, 0/4 against 4/4.
+4. Open `dim_customer`; it has 100% coverage but ranks first in simulated risk.
+5. In **Repair gate**, compare `grounded` with `verbose`, then read the answerability-not-truth caution.
 
 ---
 
@@ -274,6 +309,7 @@ These tests are adversarial toward the project itself, and they caught six real 
 
 | Endpoint | Purpose |
 |---|---|
+| `POST /api/playground` | stateless user-input evaluation and optional rewrite comparison |
 | `GET /api/queue` | risk-ranked repair queue |
 | `GET /api/assets/{id}` | columns, probes, per-column breakdown, latest results |
 | `POST /api/probe` | probe the whole catalogue |
@@ -378,9 +414,9 @@ I wrote the catalogue, the probes, the ground truth and the scoring. They share 
 
 The adapter negotiates JSON mode and retries rate limits, but a probe that fails still falls back to the simulated engine. `llmstudy.py` excludes those, so a bad connection produces a smaller study rather than a wrong one — but it does silently shrink the sample.
 
-### Not production software
+### Local-only demonstration
 
-No authentication, no authorisation, no multi-tenancy, no migrations, no rate limiting, no deployment configuration. SQLite is single-writer. The repair gate mutates a description in place during a dry run and restores it in a `finally` block — safe single-threaded, unsafe under concurrent edits.
+No authentication, authorisation, multi-tenancy, migrations, or concurrent-edit protection. SQLite is single-writer. The repair gate temporarily changes a description during a dry run and restores it in `finally`; it is appropriate for this single-user local demonstration, not for production traffic.
 
 ## License
 
