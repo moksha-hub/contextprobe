@@ -31,8 +31,8 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(
     title="Contextprobe",
-    description="Test whether catalog metadata is usable by an AI, then compare a rewrite.",
-    version="1.1.0",
+    description="Compile proof-carrying metadata mutations and test model grounding.",
+    version="1.2.0",
     lifespan=lifespan,
 )
 app.add_middleware(

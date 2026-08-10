@@ -2,7 +2,7 @@
 
 **A description in a data catalogue can exist, count as documented, and still be useless to an AI. This finds those, ranks them by how much depends on them, and verifies any attempt to fix them.**
 
-12 tables · 18 probes · Python + FastAPI + React + SQLite · runs with no API key
+12-table legacy fixture · automatic proof-carrying mutation compiler · Python + FastAPI + React + SQLite · runs with no API key
 
 ---
 
@@ -22,26 +22,45 @@ Coverage counts whether text **exists**. It cannot judge whether the text is **u
 
 ## 2. How it works
 
-Contextprobe treats a description like code: something you can write a test for.
+Contextprobe now has two deliberately separate evaluation paths.
+
+### Automatic mutation playground
+
+Paste a description; do not author a question or answer:
 
 ```
-1. I WRITE    a few real questions per column, with known answers.
-              By hand — see the limitation in section 13.
-              The answers stay hidden from the AI.
+1. EXTRACT    an exact clause containing one controlled operator:
+              include/exclude, before/after, or with/without.
 
-2. SHOW       the AI nothing except what the catalogue says about
-              that column. No hints, no ground truth.
+2. PROVE      where it came from with exact evidence and mutation spans,
+              a SHA-256 of the source, and a deterministic stable ID.
 
-3. GRADE      the reply into one of three buckets.
+3. MUTATE     it four ways: original, controlled opposite, removed,
+              and original plus bounded server-owned neutral padding.
 
-4. RANK       by danger × how many tables and dashboards sit downstream.
+4. ASK        the model for exactly SUPPORTED, CONTRADICTED, or NOT_STATED.
 
-5. VERIFY     any proposed rewrite by re-running every question.
+5. GRADE      by exact label equality in deterministic code. Provider
+              fallbacks are labelled and excluded from the model-only score.
 ```
 
-Step 1 is manual. All 18 probes are hardcoded in `backend/app/database.py`, and that is the project's main ceiling — the tool does not generate its own questions.
+The expected relationship comes from the replayable mutation, not from a human-written answer or another model. If no unambiguous claim can be compiled, the endpoint returns an empty result with diagnostics instead of inventing a test. This measures grounding and sensitivity to metadata changes; it does **not** prove the metadata is factually true.
 
-### The three buckets
+### Legacy catalogue fixture
+
+The original 12-table demonstration remains as a separate historical workflow. Its 18 hand-written questions exercise the risk queue and repair gate:
+
+```
+1. WRITE      a few known-answer questions per fixture column.
+2. SHOW       the AI only that column's catalogue description.
+3. GRADE      replies into right, safe refusal, or confident mistake.
+4. RANK       by danger × downstream blast radius.
+5. VERIFY     proposed rewrites by re-running every fixture question.
+```
+
+Those 18 fixture probes are still hardcoded in `backend/app/database.py`; they are not presented as a scalable catalogue-wide probe source.
+
+### The three legacy risk buckets
 
 Telling the last two apart is the entire idea.
 
@@ -178,38 +197,73 @@ The gate checks whether a description is **answerable**, not whether it is **tru
 
 ---
 
-## 7. Architecture
+## 7. Architecture and what comes next
 
-Three blueprint sheets, in reading order.
+The diagrams now separate what is implemented from what is only a priority. The automatic mutation path and the legacy risk/repair fixture share the UI and provider adapter, but they do not share grading, persistence, or claims about truth.
 
-### Sheet 1 — the system end to end
+### Sheet 1 — the two current execution paths
 
-![Seven layers: React dashboard, FastAPI, the probe runner, the two answerers inside a trust boundary, the deterministic grading and risk zone, SQLite, and the repair gate loop](docs/architecture.svg)
+![Current architecture: a stateless proof-carrying mutation path beside the retained SQLite risk and repair fixture, followed by three explicitly unbuilt priorities](docs/architecture.svg)
 
-The two dashed zones carry the argument. Inside the **red** zone the model is allowed to be wrong, because that is what is being measured. Inside the **green** zone every verdict is reached by ordinary deterministic code. The model is the subject of the experiment, never the judge of it.
+The **automatic path** compiles exact source claims, creates four controlled variants, and grades fixed labels without SQLite. The **legacy path** retains the 18 known-answer probes, blast-radius ranking, and dry-run repair gate. Red remains the model-under-test zone; green remains deterministic code.
 
-### Sheet 2 — how a verdict is reached
+### Sheet 2 — how a proof becomes four tests
 
-![Data model, the simulated answerer's ordered rules, three-way grading, the risk queue, the controlled pair, and the falsification result](docs/internals.svg)
+![Proof compiler internals: exact source spans, controlled mutation cases, model and deterministic engines, strict fixed-label parsing, proof validation, and fallback-safe scores](docs/internals.svg)
 
-### Sheet 3 — how a fix is verified
+Expected labels come from replayable transforms—not keyword markers, a second model, or human-authored answers. The proof validator checks spans, hashes, IDs, witnesses, and transform replay before any provider call.
 
-![Why a gate is needed, the dry-run loop, the three verdict paths, the measured accept rate and the limits](docs/repair-gate.svg)
+### Sheet 3 — repair and regression boundaries
+
+![Current legacy dry-run repair gate, the separate automatic mutation playground, and a clearly marked future provenance-backed regression workflow](docs/repair-gate.svg)
+
+The current repair gate still measures answerability rather than truth. The new mutation compiler does not repair or commit metadata. The diagram shows the safest future connection: versioned baselines, the same proofs across models, external truth evidence, then human approval.
+
+### Highest-value priorities now
+
+1. **Broaden the evidence layer, not the prompt generator.** Add provenance-preserving adapters for data types, constraints, glossary definitions, lineage, dbt artifacts, and historical agent traces. Each compiled claim must still point to exact source evidence.
+2. **Add a multi-model reliability matrix.** Run identical compiled proofs across configured models and retain per-model labels, provider failures, and model-only scores. One model must never judge another.
+3. **Persist versioned regression baselines.** Key results by source hash, compiler version, model, and prompt version; diff them when metadata changes and expose a CI-safe pass/fail policy.
+4. **Only then add real agent tasks.** SQL generation and tool-use evaluation need historical tasks, executable ground truth, and a sandbox. Without those, an agent benchmark would be a larger synthetic demo.
+
+Generated questions plus human validation are useful later for uncovered historical tasks, but they are not the first priority: they recreate the manual bottleneck this compiler just removed. An LLM semantic judge is also unnecessary for controlled mutations; exact fixed-label grading is stronger here. Semantic or entailment evaluation belongs in a future task benchmark with calibration and a human-validated held-out set.
 
 ---
 
-## 8. Browser playground
+## 8. Browser mutation playground
 
-The top panel accepts user input; no terminal commands or fixture edits are needed:
+The top panel accepts only source metadata:
 
-- **Column name and current description** — the exact catalog context shown to the model.
-- **Question** — what the model must answer using only that description.
-- **Expected answer and correct markers** — hidden from the model and used only by deterministic grading.
-- **Required context terms** — the facts that must be documented for the simulator's transparent answerability check.
-- **Optional rewrite** — evaluates the same question again and reports fixed, made-safe, regressed, or unchanged.
-- **Downstream count and certification** — demonstrate the one-probe blast-radius score.
+- **Column name**, optional **data type**, and the exact **description**.
+- **Execution mode**: deterministic lexical simulation, explicit real model, or automatic selection.
+- **Neutral padding repetitions**, bounded from one to three and using server-owned text.
 
-The result shows the answer, actual engine, context seen, matched markers, three-way outcome, risk, and before/after comparison. Playground requests are stateless and never read from or write to the SQLite fixture.
+The compiler scans period-, semicolon-, and newline-bounded clauses. It accepts only one unambiguous supported operator per clause: include/exclude (with inflections), before/after, or with/without. Every compiled claim carries its exact evidence span, operator mutation span, controlled opposite, source SHA-256, and deterministic ID.
+
+Each proof produces exactly four cases:
+
+| Variant | Expected label |
+|---|---|
+| unchanged source | `SUPPORTED` |
+| controlled operator flip | `CONTRADICTED` |
+| exact claim removed | `NOT_STATED` |
+| unchanged source plus neutral padding | `SUPPORTED` |
+
+The model sees the metadata variant and original claim, then must return one fixed label. Exact deterministic comparison produces pass/fail. Invalid prose fails closed; automatic provider fallbacks are visible and omitted from the model-only score. Requests are stateless and never read from or write to SQLite.
+
+No-match and ambiguous descriptions return successful empty compilations with diagnostics. The playground never fabricates a claim. Its result is evidence about grounding, sensitivity, abstention discipline, and noise robustness—not about whether the original description is true.
+
+### API example
+
+```json
+{
+  "column_name": "payment_amount",
+  "data_type": "decimal",
+  "description": "Payment amount in USD, excluding tax.",
+  "mode": "auto",
+  "pad_repetitions": 2
+}
+```
 
 ## 9. Run locally
 
@@ -271,8 +325,8 @@ cd ..
 
 ### Five-step demo
 
-1. Use the top playground with the prefilled `net_revenue` example and run the current-description/rewrite comparison.
-2. Click **Probe whole catalog**.
+1. Use the top playground with `Payment amount in USD, excluding tax.` and inspect its exact proof plus four generated mutations.
+2. Click **Probe whole catalog** to open the separate legacy fixture workflow.
 3. Read the controlled pair: two documented columns, 0/4 against 4/4.
 4. Open `dim_customer`; it has 100% coverage but ranks first in simulated risk.
 5. In **Repair gate**, compare `grounded` with `verbose`, then read the answerability-not-truth caution.
@@ -309,7 +363,7 @@ These tests are adversarial toward the project itself, and they caught six real 
 
 | Endpoint | Purpose |
 |---|---|
-| `POST /api/playground` | stateless user-input evaluation and optional rewrite comparison |
+| `POST /api/playground` | compile proof-carrying claims and run four stateless mutations per claim |
 | `GET /api/queue` | risk-ranked repair queue |
 | `GET /api/assets/{id}` | columns, probes, per-column breakdown, latest results |
 | `POST /api/probe` | probe the whole catalogue |
@@ -367,16 +421,15 @@ Absence from public documentation is not proof of absence internally. Atlan may 
 
 Listed worst first. Several of these are the reason this is a demonstration rather than a tool anyone should deploy.
 
-### It does not scale, because probes are hand-written
+### The automatic compiler is intentionally narrow
 
-All 18 probes are typed by hand into `database.py`. A real catalogue has 100,000+ columns; four questions each is 400,000 probes. Nobody writes those.
+The browser workflow removes per-column question and answer authoring, but it only compiles claims with controlled lexical opposites: include/exclude (including inflections), before/after, and with/without. It rejects clauses containing multiple supported operators, repeated evidence, or an already-present opposite. Descriptions outside that grammar produce no test rather than a guessed one.
 
-The fix is two-sided and neither half is built:
+This is scalable in authoring effort, not comprehensive in semantics. It cannot yet test units, currencies, formulas, ownership, freshness windows, or arbitrary business rules. More operators should be added only when both the mutation and expected relationship remain exactly replayable.
 
-- **Questions** could be templated from data type and name pattern — a `*_revenue` decimal gets asked about currency, tax and recognition date; a `*_at` timestamp gets asked about timezone.
-- **Ground truth** would have to be *derived* rather than authored — from transformation SQL, dbt tests, or the data profile. If a model computes `gross_revenue - refunds`, then "are refunds deducted?" answers itself.
+### The legacy fixture probes do not scale
 
-Deriving the answer also removes a circularity: right now a human writes both the question and its answer.
+All 18 risk-queue probes are typed by hand into `database.py`. They remain useful for reproducing the original risk and repair demonstration, but a real catalogue cannot use that path at 100,000+ columns. The mutation compiler is the automated alternative for supported claims; factual verification still requires independent evidence such as transformation SQL, dbt tests, profiles, or query history.
 
 ### The risk numbers in section 4 are not measured behaviour
 
@@ -386,13 +439,15 @@ They come from the hypothesis engine, and section 5 showed that hypothesis is wr
 
 One small free-tier model, 26 usable evaluations of 36 attempted, 42 rate-limit responses. Two probes gave different answers across runs. The headline finding — that an empty description was the dangerous case — rests on a single probe in a single run that did not reproduce in the second. It is a lead, not a result.
 
-### Grading is keyword matching
+### Legacy grading is keyword matching
 
-`matches_expected` looks for substrings in short answers. It cannot detect inverted meaning, and it would fall apart on long free-form replies without semantic comparison. `selfcheck.py` exists precisely because this is fragile — it caught a wrong answer being graded correct because `"not deducted"` contains `"deduct"`.
+The 18-probe fixture still uses `matches_expected`, which looks for substrings in short answers. It cannot reliably detect inverted meaning; `selfcheck.py` exists because this path once marked `"not deducted"` correct merely because it contains `"deduct"`. These legacy outcomes support the historical risk and repair demonstration, not the automatic mutation score.
 
-### A description could be gamed
+The mutation playground does **not** use this grader. Its expected labels come from controlled transform replay, and observed output must equal one of three complete fixed labels. This removes substring grading for compiled claims, but still tests grounding rather than factual truth.
 
-Stuff the required keywords into a description and it passes without becoming clearer to a human. Resisting that needs a held-out probe set the author of the description has never seen.
+### The legacy fixture can be gamed
+
+Stuffing required keywords into a legacy description can pass its marker grader without making the text clearer or true. The mutation path removes hidden keyword targets and explicitly tests a controlled opposite, but it can still only verify whether the model follows the supplied text. Independent truth requires SQL, dbt tests, constraints, profiles, glossary evidence, or human validation.
 
 ### The repair gate checks answerability, not truth
 

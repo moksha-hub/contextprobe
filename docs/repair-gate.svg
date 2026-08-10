@@ -1,187 +1,65 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 1700" width="1400" height="1700" font-family="'Comic Sans MS','Segoe Print','Bradley Hand','Chalkboard SE',cursive">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 1300" width="1400" height="1300" role="img" aria-labelledby="title desc">
+  <title id="title">Contextprobe repair and regression boundaries</title>
+  <desc id="desc">The current legacy dry-run repair gate, the separate automatic mutation compiler, and the future regression gate that could connect them without automatic commits.</desc>
   <defs>
-    <pattern id="rg" width="26" height="26" patternUnits="userSpaceOnUse">
-      <path d="M 26 0 L 0 0 0 26" fill="none" stroke="#dcd5c4" stroke-width="0.6"/>
-    </pattern>
-    <marker id="ra" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M 0 1 L 10 5 L 0 9 z" fill="#23201c"/>
-    </marker>
-    <marker id="rar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M 0 1 L 10 5 L 0 9 z" fill="#b03a2e"/>
-    </marker>
-    <marker id="rag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M 0 1 L 10 5 L 0 9 z" fill="#2e6b4f"/>
-    </marker>
+    <pattern id="grid" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="#e8e3d8"/></pattern>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 1L10 5L0 9Z" fill="#26352f"/></marker>
+    <style>
+      text{font-family:Inter,Segoe UI,Arial,sans-serif;fill:#203129}.title{font-size:34px;font-weight:800}.sub{font-size:16px;fill:#63736b}.h{font-size:20px;font-weight:800}.k{font-size:13px;font-weight:800;letter-spacing:1px}.b{font-size:14px}.s{font-size:12px;fill:#63736b}.mono{font-family:Consolas,monospace;font-size:13px}.card{fill:#fff;stroke:#ced9d2;stroke-width:2}.good{fill:#eef7f1;stroke:#2e6b4f;stroke-width:2}.bad{fill:#fff1ef;stroke:#b64a3d;stroke-width:2}.warn{fill:#fff9e7;stroke:#b99424;stroke-width:2}.future{fill:#f1f5fa;stroke:#35658a;stroke-width:2;stroke-dasharray:8 6}.line{fill:none;stroke:#26352f;stroke-width:2;marker-end:url(#arrow)}
+    </style>
   </defs>
+  <rect width="1400" height="1300" fill="#fcfaf4"/><rect width="1400" height="1300" fill="url(#grid)"/>
+  <rect x="70" y="38" width="1260" height="100" rx="14" class="card"/>
+  <text x="105" y="82" class="title">REPAIR GATE AND REGRESSION BOUNDARIES</text>
+  <text x="105" y="113" class="sub">What is built today, what the mutation compiler does not do, and the safest next integration</text>
 
-  <rect width="1400" height="1700" fill="#fdfbf4"/>
-  <rect width="1400" height="1700" fill="url(#rg)"/>
-  <path d="M96,0 L96,1700" stroke="#e2b4ae" stroke-width="1.6"/>
+  <rect x="70" y="170" width="1260" height="92" rx="12" class="warn"/>
+  <text x="94" y="202" class="k">IMPORTANT SEPARATION</text><text x="94" y="229" class="b">The automatic mutation playground tests grounding and never edits metadata. The repair gate below is the legacy 18-probe fixture path.</text><text x="94" y="250" class="s">Neither path establishes factual truth, and neither path automatically commits a rewrite.</text>
 
-  <g transform="rotate(-0.4 700 70)">
-    <rect x="150" y="34" width="1130" height="88" rx="8" fill="#fff" stroke="#23201c" stroke-width="3"/>
-    <rect x="154" y="38" width="1130" height="88" rx="8" fill="none" stroke="#23201c" stroke-width="0.9" opacity="0.3"/>
-  </g>
-  <text x="182" y="76" font-size="32" font-weight="bold" fill="#23201c">CONTEXTPROBE &#8212; THE REPAIR GATE</text>
-  <text x="182" y="107" font-size="18" fill="#5f5a52">A rewrite is accepted only if it fixes a failing question without breaking one that passed.</text>
-  <text x="1130" y="107" font-size="15" fill="#b03a2e">sheet 3 of 3</text>
+  <text x="80" y="318" class="h">A · CURRENT DRY-RUN REPAIR GATE — BUILT</text>
+  <rect x="70" y="340" width="190" height="126" rx="12" class="card"/>
+  <text x="91" y="371" class="k">1 · BASELINE</text><text x="91" y="401" class="b">Run all probes</text><text x="91" y="425" class="b">for the asset</text><text x="91" y="451" class="s">persist = false</text>
+  <path d="M260 403H284" class="line"/>
+  <rect x="286" y="340" width="190" height="126" rx="12" class="card"/>
+  <text x="307" y="371" class="k">2 · GROUND</text><text x="307" y="401" class="b">Read upstream,</text><text x="307" y="425" class="b">sibling, asset text</text><text x="307" y="451" class="s">No probe terms</text>
+  <path d="M476 403H500" class="line"/>
+  <rect x="502" y="340" width="190" height="126" rx="12" class="card"/>
+  <text x="523" y="371" class="k">3 · COMPOSE</text><text x="523" y="401" class="b">grounded, verbose,</text><text x="523" y="425" class="b">or narrow candidate</text><text x="523" y="451" class="s">Fixture strategies</text>
+  <path d="M692 403H716" class="line"/>
+  <rect x="718" y="340" width="190" height="126" rx="12" class="warn"/>
+  <text x="739" y="371" class="k">4 · APPLY</text><text x="739" y="401" class="b">Temporarily write</text><text x="739" y="425" class="b">the candidate</text><text x="739" y="451" class="s">Single-user fixture</text>
+  <path d="M908 403H932" class="line"/>
+  <rect x="934" y="340" width="190" height="126" rx="12" class="card"/>
+  <text x="955" y="371" class="k">5 · RE-PROBE</text><text x="955" y="401" class="b">Compare every</text><text x="955" y="425" class="b">before/after outcome</text><text x="955" y="451" class="s">persist = false</text>
+  <path d="M1124 403H1148" class="line"/>
+  <rect x="1150" y="340" width="180" height="126" rx="12" class="good"/>
+  <text x="1171" y="371" class="k">6 · RESTORE</text><text x="1171" y="401" class="b">Always in finally</text><text x="1171" y="425" class="b">even on failure</text><text x="1171" y="451" class="s">Asserted by tests</text>
 
-  <!-- WHY -->
-  <g transform="rotate(0.3 700 196)">
-    <rect x="150" y="146" width="1130" height="112" rx="8" fill="#fff8e1" stroke="#c9a227" stroke-width="2.2"/>
-  </g>
-  <text x="176" y="176" font-size="17" font-weight="bold" fill="#7a5c00">WHY A GATE IS NECESSARY, NOT DECORATIVE&#8194;&#8212;&#8194;two published Atlan findings, side by side</text>
-  <text x="176" y="206" font-size="14.5" fill="#2e6b4f">&#8226;&#8194;enhanced metadata &#8594; +38% SQL accuracy (522 evaluations, p &lt; 0.0001)</text>
-  <text x="176" y="230" font-size="14.5" fill="#b03a2e">&#8226;&#8194;the VERBOSE variant of the same facts &#8594; 13.8% WORSE, 52% more expensive (attention decay)</text>
-  <text x="176" y="252" font-size="14" fill="#23201c">&#8594; a description edit is not monotonic. it can regress. so an edit needs a test, not a hope.</text>
+  <rect x="70" y="500" width="605" height="156" rx="12" class="good"/>
+  <text x="94" y="532" class="k">CURRENT VERDICT</text><text x="94" y="568" class="mono">ACCEPT ⇔ fixed &gt; 0 AND regressed = 0</text><text x="94" y="602" class="b">Measured fixture sweep: 1 accepted of 3 attempted</text><text x="94" y="630" class="s">Accepted means answerability improved—not that wording is true.</text>
+  <rect x="695" y="500" width="635" height="156" rx="12" class="bad"/>
+  <text x="719" y="532" class="k">KNOWN COUNTEREXAMPLE</text><text x="719" y="564" class="b">The accepted net_revenue rewrite inherits “before refunds”</text><text x="719" y="590" class="b">from gross_revenue. That polarity is false for net revenue,</text><text x="719" y="616" class="b">but the legacy marker grader cannot detect it.</text><text x="719" y="640" class="s">Therefore the result is a steward recommendation, never an automatic commit.</text>
 
-  <!-- THE POPULATION -->
-  <text x="164" y="306" font-size="21" font-weight="bold" fill="#1f4e79">A &#183; THE POPULATION NOTHING ELSE TOUCHES</text>
+  <text x="80" y="718" class="h">B · AUTOMATIC MUTATION PLAYGROUND — BUILT, SEPARATE</text>
+  <rect x="70" y="740" width="1260" height="142" rx="12" class="good"/>
+  <text x="94" y="772" class="k">WHAT IT ADDS NOW</text><text x="94" y="802" class="b">Exact source spans, controlled polarity flips, removal, padding, fixed labels, strict comparison, and fallback-safe scoring.</text><text x="94" y="830" class="b">It removes human-authored questions for supported claims and catches whether a model tracks a controlled opposite.</text><text x="94" y="858" class="s">It does not propose a rewrite, consult external truth, calculate blast radius, persist results, or replace the legacy repair gate.</text>
 
-  <g transform="rotate(-0.25 400 400)">
-    <rect x="164" y="322" width="472" height="156" rx="8" fill="#fdeceb" stroke="#b03a2e" stroke-width="2.4"/>
-  </g>
-  <text x="182" y="350" font-size="16" font-weight="bold" fill="#b03a2e">fct_revenue.net_revenue = "Net revenue."</text>
-  <text x="182" y="380" font-size="13.5" fill="#23201c">coverage is a FILL-RATE &#8594; counts as 100% covered</text>
-  <text x="182" y="404" font-size="13.5" fill="#23201c">enrichment agents SKIP assets that already have a</text>
-  <text x="182" y="424" font-size="13.5" fill="#23201c">description &#8594; never revisited, by design</text>
-  <text x="182" y="450" font-size="13.5" fill="#b03a2e">a human or the SDK can still edit it &#8212; but nothing</text>
-  <text x="182" y="468" font-size="13.5" fill="#b03a2e">AUTOMATICALLY flags it as worth editing.</text>
+  <text x="80" y="944" class="h">C · SAFE NEXT INTEGRATION — NOT YET BUILT</text>
+  <rect x="70" y="966" width="245" height="174" rx="12" class="future"/>
+  <text x="92" y="998" class="k">1 · VERSION INPUT</text><text x="92" y="1028" class="b">Source hash, compiler,</text><text x="92" y="1052" class="b">context-source IDs,</text><text x="92" y="1076" class="b">model and prompt</text><text x="92" y="1112" class="s">Reproducible baseline</text>
+  <path d="M315 1053H339" class="line"/>
+  <rect x="341" y="966" width="245" height="174" rx="12" class="future"/>
+  <text x="363" y="998" class="k">2 · RUN MATRIX</text><text x="363" y="1028" class="b">Same proof cases</text><text x="363" y="1052" class="b">across configured</text><text x="363" y="1076" class="b">models and contexts</text><text x="363" y="1112" class="s">No model judges another</text>
+  <path d="M586 1053H610" class="line"/>
+  <rect x="612" y="966" width="245" height="174" rx="12" class="future"/>
+  <text x="634" y="998" class="k">3 · DIFF LABELS</text><text x="634" y="1028" class="b">Detect changed pass,</text><text x="634" y="1052" class="b">abstention, fallback,</text><text x="634" y="1076" class="b">and invalid rates</text><text x="634" y="1112" class="s">Block regressions in CI</text>
+  <path d="M857 1053H881" class="line"/>
+  <rect x="883" y="966" width="245" height="174" rx="12" class="future"/>
+  <text x="905" y="998" class="k">4 · VERIFY TRUTH</text><text x="905" y="1028" class="b">Use SQL, dbt tests,</text><text x="905" y="1052" class="b">constraints, glossary,</text><text x="905" y="1076" class="b">or human evidence</text><text x="905" y="1112" class="s">Separate from grounding</text>
+  <path d="M1128 1053H1152" class="line"/>
+  <rect x="1154" y="966" width="176" height="174" rx="12" class="future"/>
+  <text x="1176" y="998" class="k">5 · APPROVE</text><text x="1176" y="1028" class="b">Show evidence</text><text x="1176" y="1052" class="b">and diffs to</text><text x="1176" y="1076" class="b">a steward</text><text x="1176" y="1112" class="s">Never auto-commit</text>
 
-  <g transform="rotate(0.3 960 400)">
-    <rect x="668" y="322" width="612" height="156" rx="8" fill="#fff" stroke="#23201c" stroke-width="2.4"/>
-  </g>
-  <text x="688" y="350" font-size="16" font-weight="bold" fill="#1f4e79">WHO REVISITS IT AUTOMATICALLY?  NOBODY</text>
-  <text x="688" y="378" font-size="13.5" fill="#23201c">a coverage dashboard&#8194;&#8194;&#8594; "documented, done"</text>
-  <text x="688" y="402" font-size="13.5" fill="#23201c">an enrichment agent&#8194;&#8194;&#8594; "already filled, skip"</text>
-  <text x="688" y="426" font-size="13.5" fill="#23201c">a human feedback loop &#8594; only once someone gets</text>
-  <text x="688" y="446" font-size="13.5" fill="#23201c">&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;confused and reports it</text>
-  <text x="688" y="470" font-size="12.5" fill="#b03a2e">NOT a bug: never overwriting human work is a deliberate safety choice.</text>
-
-  <!-- THE LOOP -->
-  <text x="164" y="530" font-size="21" font-weight="bold" fill="#1f4e79">B &#183; THE LOOP &#8212; strictly a dry run</text>
-
-  <g transform="rotate(0.2 722 632)">
-    <rect x="164" y="546" width="1116" height="172" rx="8" fill="#fff" stroke="#23201c" stroke-width="2.4"/>
-  </g>
-  <g font-size="12.5">
-    <rect x="182" y="566" width="152" height="76" rx="6" fill="#eef4fa" stroke="#1f4e79" stroke-width="1.8"/>
-    <text x="194" y="590" fill="#23201c">1 baseline</text>
-    <text x="194" y="610" font-size="11" fill="#5f5a52">probe the asset</text>
-    <text x="194" y="628" font-size="11" fill="#b03a2e">persist = False</text>
-
-    <rect x="356" y="566" width="152" height="76" rx="6" fill="#eef4fa" stroke="#1f4e79" stroke-width="1.8"/>
-    <text x="368" y="590" fill="#23201c">2 ground</text>
-    <text x="368" y="610" font-size="11" fill="#5f5a52">upstream + sibling</text>
-    <text x="368" y="628" font-size="11" fill="#5f5a52">clauses via lineage</text>
-
-    <rect x="530" y="566" width="152" height="76" rx="6" fill="#fdeceb" stroke="#b03a2e" stroke-width="1.8"/>
-    <text x="542" y="590" fill="#23201c">3 compose</text>
-    <text x="542" y="610" font-size="11" fill="#5f5a52">grounded|verbose</text>
-    <text x="542" y="628" font-size="11" fill="#5f5a52">|narrow</text>
-
-    <rect x="704" y="566" width="152" height="76" rx="6" fill="#fff8e1" stroke="#c9a227" stroke-width="1.8"/>
-    <text x="716" y="590" fill="#23201c">4 apply</text>
-    <text x="716" y="610" font-size="11" fill="#5f5a52">temporarily</text>
-    <text x="716" y="628" font-size="11" fill="#5f5a52">write candidate</text>
-
-    <rect x="878" y="566" width="152" height="76" rx="6" fill="#eef4fa" stroke="#1f4e79" stroke-width="1.8"/>
-    <text x="890" y="590" fill="#23201c">5 re-probe</text>
-    <text x="890" y="610" font-size="11" fill="#5f5a52">same suite</text>
-    <text x="890" y="628" font-size="11" fill="#b03a2e">persist = False</text>
-
-    <rect x="1052" y="566" width="196" height="76" rx="6" fill="#eef7f1" stroke="#2e6b4f" stroke-width="1.8"/>
-    <text x="1064" y="590" fill="#23201c">6 RESTORE</text>
-    <text x="1064" y="610" font-size="11" fill="#5f5a52">in a finally block &#8212;</text>
-    <text x="1064" y="628" font-size="11" fill="#2e6b4f">always, even on crash</text>
-  </g>
-  <path d="M334,604 L354,604" stroke="#23201c" stroke-width="1.8" marker-end="url(#ra)"/>
-  <path d="M508,604 L528,604" stroke="#23201c" stroke-width="1.8" marker-end="url(#ra)"/>
-  <path d="M682,604 L702,604" stroke="#23201c" stroke-width="1.8" marker-end="url(#ra)"/>
-  <path d="M856,604 L876,604" stroke="#23201c" stroke-width="1.8" marker-end="url(#ra)"/>
-  <path d="M1030,604 L1050,604" stroke="#23201c" stroke-width="1.8" marker-end="url(#ra)"/>
-  <text x="182" y="676" font-size="13.5" fill="#b03a2e">GENERATION IS BLIND TO THE PROBE SUITE. it never sees required_terms &#8212; otherwise it would insert the exact tokens</text>
-  <text x="182" y="698" font-size="13.5" fill="#b03a2e">the grader looks for and every repair would pass by construction. diagnosis afterwards may use them; generation may not.</text>
-
-  <!-- THE VERDICT RULE -->
-  <text x="164" y="758" font-size="21" font-weight="bold" fill="#1f4e79">C &#183; THE VERDICT &#8212; one rule, three ways to fail it</text>
-
-  <g transform="rotate(-0.2 722 800)">
-    <rect x="164" y="774" width="1116" height="52" rx="7" fill="#ffe9a8" stroke="#c9a227" stroke-width="2.2"/>
-  </g>
-  <text x="722" y="806" font-size="18" text-anchor="middle" fill="#23201c">ACCEPTED&#8194;&#8660;&#8194;fixed &gt; 0&#8194;&#8194;AND&#8194;&#8194;regressed = 0</text>
-
-  <g transform="rotate(0.25 400 918)">
-    <rect x="164" y="846" width="472" height="146" rx="8" fill="#eef7f1" stroke="#2e6b4f" stroke-width="2.6"/>
-  </g>
-  <text x="182" y="874" font-size="16" font-weight="bold" fill="#2e6b4f">grounded &#8594; ACCEPTED</text>
-  <text x="182" y="900" font-size="12.5" fill="#23201c">"Net revenue in fct_revenue. Gross revenue in</text>
-  <text x="182" y="918" font-size="12.5" fill="#23201c">USD before returns, refunds and tax. Payment</text>
-  <text x="182" y="936" font-size="12.5" fill="#23201c">amount converted to USD at the transaction-date</text>
-  <text x="182" y="954" font-size="12.5" fill="#23201c">rate, excluding tax and gateway fees."</text>
-  <text x="182" y="978" font-size="13.5" fill="#2e6b4f">175 chars &#183; 3 fixed &#183; 0 regressed</text>
-
-  <g transform="rotate(-0.3 960 918)">
-    <rect x="668" y="846" width="300" height="146" rx="8" fill="#fdeceb" stroke="#b03a2e" stroke-width="2.6"/>
-  </g>
-  <text x="686" y="874" font-size="16" font-weight="bold" fill="#b03a2e">verbose &#8594; REJECTED</text>
-  <text x="686" y="900" font-size="12.5" fill="#23201c">same facts, 504 chars,</text>
-  <text x="686" y="920" font-size="12.5" fill="#23201c">preceded by governance</text>
-  <text x="686" y="940" font-size="12.5" fill="#23201c">boilerplate</text>
-  <text x="686" y="966" font-size="13" fill="#b03a2e">0 fixed &#8212; the facts fall</text>
-  <text x="686" y="984" font-size="13" fill="#b03a2e">past the 200-char window</text>
-
-  <g transform="rotate(0.2 1124 918)">
-    <rect x="1000" y="846" width="280" height="146" rx="8" fill="#fdeceb" stroke="#b03a2e" stroke-width="2.6"/>
-  </g>
-  <text x="1018" y="874" font-size="16" font-weight="bold" fill="#b03a2e">narrow &#8594; REJECTED</text>
-  <text x="1018" y="900" font-size="12.5" fill="#23201c">one clause only, on</text>
-  <text x="1018" y="920" font-size="12.5" fill="#23201c">gross_revenue which</text>
-  <text x="1018" y="940" font-size="12.5" fill="#23201c">was passing 4/4</text>
-  <text x="1018" y="966" font-size="13" fill="#b03a2e">0 fixed &#183; 2 REGRESSED</text>
-  <text x="1018" y="984" font-size="13" fill="#b03a2e">(refund + order date lost)</text>
-
-  <text x="164" y="1024" font-size="13.5" fill="#5f5a52">a gate that only ever accepts proves nothing. two of the three demo paths must fail, and repaircheck.py asserts that they do.</text>
-
-  <!-- MEASURED SWEEP -->
-  <text x="164" y="1080" font-size="21" font-weight="bold" fill="#1f4e79">D &#183; MEASURED SWEEP &#8212; every failing column, grounded strategy</text>
-
-  <g transform="rotate(-0.2 470 1180)">
-    <rect x="164" y="1096" width="612" height="172" rx="8" fill="#fff" stroke="#23201c" stroke-width="2.4"/>
-  </g>
-  <text x="182" y="1124" font-size="15" font-weight="bold" fill="#23201c">column&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;VERDICT</text>
-  <path d="M180,1134 L760,1134" stroke="#23201c" stroke-width="1.4"/>
-  <rect x="176" y="1142" width="588" height="28" fill="#eef7f1"/>
-  <text x="182" y="1162" font-size="14" fill="#2e6b4f">fct_revenue.net_revenue&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;ACCEPTED (3 fixed)</text>
-  <rect x="176" y="1174" width="588" height="28" fill="#fdeceb"/>
-  <text x="182" y="1194" font-size="14" fill="#b03a2e">dim_customer.region&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;rejected</text>
-  <rect x="176" y="1206" width="588" height="28" fill="#fdeceb"/>
-  <text x="182" y="1226" font-size="14" fill="#b03a2e">stg_payments.payment_status&#8194;&#8194;&#8194;&#8194;&#8194;&#8194;rejected</text>
-  <text x="182" y="1256" font-size="15" fill="#23201c">accept rate&#8194;&#8194;1 / 3&#8194;&#8194;=&#8194;&#8194;0.333</text>
-
-  <g transform="rotate(0.25 1030 1180)">
-    <rect x="796" y="1096" width="484" height="172" rx="8" fill="#fff8e1" stroke="#c9a227" stroke-width="2.2"/>
-  </g>
-  <text x="816" y="1124" font-size="16" font-weight="bold" fill="#7a5c00">THE REJECTIONS ARE CORRECT</text>
-  <text x="816" y="1152" font-size="13" fill="#23201c">region needs "shipping vs billing". payment_status</text>
-  <text x="816" y="1172" font-size="13" fill="#23201c">needs its allowed values. NEITHER FACT EXISTS</text>
-  <text x="816" y="1192" font-size="13" fill="#23201c">ANYWHERE in the catalog, upstream or otherwise.</text>
-  <text x="816" y="1220" font-size="13.5" fill="#7a5c00">so no lineage-grounded rewrite can supply them.</text>
-  <text x="816" y="1240" font-size="13.5" fill="#7a5c00">a human has to. the gate says so instead of</text>
-  <text x="816" y="1258" font-size="13.5" fill="#7a5c00">shipping confident filler.</text>
-
-  <!-- LIMITS -->
-  <g transform="rotate(-0.2 722 1420)">
-    <rect x="164" y="1310" width="1116" height="196" rx="8" fill="#fdeceb" stroke="#b03a2e" stroke-width="2.6"/>
-  </g>
-  <text x="184" y="1340" font-size="18" font-weight="bold" fill="#b03a2e">WHAT THE GATE DOES NOT DO</text>
-  <text x="184" y="1370" font-size="13.5" fill="#23201c">It verifies ANSWERABILITY, not TRUTH. The accepted candidate above inherits "before returns, refunds and tax" from</text>
-  <text x="184" y="1392" font-size="13.5" fill="#23201c">gross_revenue &#8212; correct for that column, and semantically WRONG for net revenue, which is after refunds.</text>
-  <text x="184" y="1414" font-size="13.5" fill="#b03a2e">The probe passes on keyword presence and cannot see the inverted polarity. A steward must confirm the wording.</text>
-  <text x="184" y="1444" font-size="13.5" fill="#23201c">That limitation is the sharpest argument for LLM mode: only a real model reading the sentence could catch it.</text>
-  <text x="184" y="1472" font-size="13.5" fill="#23201c">The salience window is a documented hypothesis grounded in Atlan's 13.8% finding &#8212; not evidence about real models.</text>
-  <text x="184" y="1494" font-size="13" fill="#5f5a52">Weights, thresholds and the 200-char window are chosen for this fixture, not calibrated on production data.</text>
-
-  <text x="164" y="1546" font-size="13" fill="#5f5a52">verify: py backend\repaircheck.py&#8194;&#183;&#8194;py backend\apicheck.py&#8194;&#183;&#8194;py backend\selfcheck.py&#8194;&#183;&#8194;py backend\measure.py</text>
-  <text x="164" y="1572" font-size="13" fill="#5f5a52">dry-run safety is asserted, not assumed: the stored description and the probe_results row count must both be unchanged.</text>
+  <rect x="70" y="1180" width="1260" height="74" rx="12" class="warn"/>
+  <text x="94" y="1210" class="k">PRIORITY RULE</text><text x="94" y="1238" class="b">Add provenance-backed context and multi-model regression before agentic repair; otherwise automation only scales an unverified rewrite.</text>
 </svg>

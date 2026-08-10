@@ -1,10 +1,23 @@
 # Design notes
 
-## The question this measures
+## The questions this measures
 
-Existing metadata quality metrics answer *"is a description present?"*. Contextprobe answers *"is the description sufficient for an agent to act on, and does the agent recognise when it isn't?"*
+Existing metadata quality metrics answer *"is a description present?"*. Contextprobe now runs two separate experiments:
 
-The unit under test is **the metadata**, not the agent. The agent is the instrument.
+- The **automatic mutation path** asks whether a model tracks an exact claim when that claim is preserved, reversed, removed, or surrounded by neutral noise.
+- The **legacy fixture path** asks whether a description is sufficient for known operational questions and whether the model recognises when it is not.
+
+In both, the unit under test is **the metadata context**, not the agent. The model is the instrument and never the final judge.
+
+## Proof-carrying mutation path
+
+`POST /api/playground` accepts a column name, optional data type, description, execution mode, and bounded padding count. It does not accept client-authored questions, expected answers, markers, or operators.
+
+The compiler scans clause boundaries and accepts exactly one registered reversible operator: include/exclude (with explicit inflections), before/after, or with/without. A proof carries the exact evidence and mutation spans, source SHA-256, controlled opposite, and deterministic ID. It then creates original, flipped, removed, and padded variants with expected labels `SUPPORTED`, `CONTRADICTED`, `NOT_STATED`, and `SUPPORTED`.
+
+Every transform is replayed and validated before execution. Ambiguous, repeated, unsupported, or malformed claims produce diagnostics rather than invented tests. The endpoint is stateless and does not touch SQLite.
+
+This path measures grounding, sensitivity, abstention discipline, and noise robustness. Because its source may itself be false, it does not establish factual truth.
 
 ## Why three outcomes instead of two
 
@@ -39,13 +52,21 @@ Rule 3 encodes a design lesson worth stating: **metadata that admits its own inc
 
 ## Grading
 
-Deterministic and independent of the model:
+Both paths are deterministic and independent of the model, but they use different evidence.
+
+### Automatic mutation grading
+
+The expected label comes from transform replay. Model output must exactly equal `SUPPORTED`, `CONTRADICTED`, or `NOT_STATED`; partial matches and prose become `INVALID`. The deterministic simulator classifies exact claim and controlled-opposite witnesses in the actual variant and never reads the expected label. Provider fallbacks are labelled and excluded from `model_only_score`.
+
+This removes keyword-answer grading for compiled claims without introducing an LLM judge.
+
+### Legacy fixture grading
 
 1. Explicit `abstained` flag, or an abstention phrase in the answer → `abstained`.
 2. Otherwise, answer contains any `correct_marker` → `correct`.
 3. Otherwise → `confident_wrong`.
 
-Substring markers are fragile. That fragility is contained by `selfcheck.py`, which asserts for all 18 probes that the ground-truth answer matches its own markers and the wrong answer does not. That check caught a real defect during development.
+Substring markers are fragile. That fragility is contained by `selfcheck.py`, which asserts for all 18 fixture probes that the ground-truth answer matches its own markers and the wrong answer does not. That check caught a real defect during development. This grader supports the historical risk and repair demonstration only.
 
 ## The repair gate
 
@@ -118,17 +139,25 @@ Storing `context_seen` per result is what makes a finding auditable after the fa
 
 ## Failure behaviour
 
-- LLM request has a 30-second timeout; HTTP, JSON, or empty-answer failures fall back per-probe to the simulated engine, and the response reports `llm_fallbacks`.
+- Automatic mode attempts the configured real model and visibly falls back per case; those cases are excluded from `model_only_score`. Explicit LLM mode returns HTTP 503 when configuration or a usable provider response is unavailable.
+- A playground description with no supported unambiguous claim returns HTTP 200 with an empty proof list, null score, and deterministic diagnostics.
 - A required catalog query failure returns HTTP 503 and produces no results, rather than reporting a misleadingly clean queue.
-- Probe definitions are upserted on startup, so a corrected suite can never silently grade against a stale seeded row.
+- Probe definitions are upserted on startup, so a corrected legacy suite can never silently grade against a stale seeded row.
 
 ## Deliberate trade-offs
 
-- **SQLite over PostgreSQL** — zero setup matters more than scale for a 12-asset fixture.
-- **Plain functions over an agent framework** — the context boundary must be obvious and auditable.
-- **Hand-written probes over generated ones** — ground truth quality beats probe volume at this size.
-- **Synthetic catalog over a live connector** — reproducibility beats a demo that only works on one warehouse.
+- **SQLite over PostgreSQL** — zero setup matters more than scale for the retained 12-asset fixture.
+- **Plain functions over an agent framework** — proof construction, context boundaries, and verdict ownership must remain obvious and auditable.
+- **Controlled mutation grammar over generated questions** — supported claims require no human-authored answer and carry replayable evidence; unsupported semantics fail empty instead of being guessed.
+- **Hand-written probes retained only for the legacy fixture** — their known ground truth preserves the original risk and repair demonstration, but they are not the scaling strategy.
+- **Synthetic catalog over a live connector** — reproducibility currently beats a demo that only works on one warehouse.
 
-## If this went to production
+## Priority roadmap
 
-Replace the fixture with a catalog connector; derive probes from real logged agent questions instead of hand-writing them; calibrate the risk weights against incidents actually caused by bad metadata; use semantic grading with a held-out probe set to resist keyword stuffing; run probes on a schedule and treat a rising `confident_wrong` rate as metadata drift; and route the queue to asset owners rather than a shared dashboard.
+1. Add provenance-preserving context adapters for types, constraints, glossary definitions, lineage, dbt artifacts, and historical agent traces.
+2. Run the same compiled proof set across multiple configured models and preserve per-model labels, failures, and fallback-free scores.
+3. Persist versioned baselines keyed by source hash, compiler version, model, and prompt version; diff them on metadata changes for CI regression checks.
+4. Add executable agent tasks only after historical tasks, warehouse ground truth, and a safe SQL/tool sandbox exist.
+5. Add AI-assisted repair only after external truth evidence and regression checks exist; keep human approval and never auto-commit.
+
+Generated questions and semantic grading remain useful for future task traces that the controlled grammar cannot cover. They require a calibrated evaluator and human-validated held-out set. They do not replace exact mutation grading, and one model must never be allowed to grade another without independent calibration.

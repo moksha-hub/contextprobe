@@ -189,3 +189,59 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
   .play-grid, .play-grid.compact, .play-results { grid-template-columns: 1fr; }
   .play-summary em { margin-left: 0; }
 }
+
+/* Proof-carrying compiler results. These replace the legacy question/answer cards. */
+.play-grid.compact { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.compiler-summary {
+  display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px;
+  padding: 12px; margin-bottom: 12px; border-radius: 10px; background: #f3f7f4;
+}
+.compiler-summary div { min-width: 0; }
+.compiler-summary span {
+  display: block; color: #7b8b83; font-size: 8px; font-weight: 800;
+  letter-spacing: .06em; text-transform: uppercase;
+}
+.compiler-summary strong { display: block; margin-top: 4px; font-size: 13px; overflow-wrap: anywhere; }
+.diagnostics {
+  margin-bottom: 12px; border: 1px solid #e6d9aa; border-radius: 10px;
+  padding: 11px 13px; background: #fffbec; color: #65551f; font-size: 11px;
+}
+.diagnostics > strong { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; }
+.diagnostics ul { margin: 7px 0 0; padding-left: 18px; display: grid; gap: 5px; }
+.diagnostics code { margin-right: 5px; font-size: 10px; font-weight: 800; }
+.proof-list { display: grid; gap: 14px; }
+.proof-card { border: 1px solid #dce5de; border-radius: 12px; padding: 14px; background: #fbfcfb; }
+.proof-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.proof-head h4 { margin: 0; font-size: 14px; line-height: 1.4; }
+.proof-head code { color: #61736a; background: #edf2ee; border-radius: 6px; padding: 5px 7px; font-size: 9px; }
+.proof-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 11px; }
+.proof-meta span { color: #65766d; background: #eef3ef; border-radius: 999px; padding: 5px 8px; font-size: 9px; }
+.proof-meta b { color: #273c32; }
+.proof-evidence { margin: 10px 0 0; color: #4d6157; font-size: 11px; line-height: 1.5; }
+.mutation-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; margin-top: 12px; }
+.mutation-case { border: 1px solid #e0e6e1; border-radius: 10px; padding: 11px; background: #fff; }
+.mutation-case.passed { border-color: #bfe0c9; background: #f5fbf6; }
+.mutation-case.failed { border-color: #edc0b9; background: #fff7f5; }
+.mutation-head { display: flex; justify-content: space-between; gap: 9px; align-items: flex-start; }
+.mutation-head span { display: block; color: #74857c; font-size: 8px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.mutation-head strong { display: block; margin-top: 3px; font-size: 14px; }
+.mutation-case.passed .mutation-head strong { color: #22603e; }
+.mutation-case.failed .mutation-head strong { color: #a5382e; }
+.mutation-head small { color: #5d6f66; background: #edf2ee; border-radius: 999px; padding: 4px 6px; font-size: 8px; font-weight: 800; }
+.label-pair { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+.label-pair span { border: 1px solid #e1e7e2; border-radius: 6px; padding: 5px 6px; color: #71827a; font-size: 8px; text-transform: uppercase; }
+.label-pair b { display: block; margin-top: 2px; color: #2e4238; font-size: 9px; }
+.mutation-case dl { display: grid; gap: 7px; margin: 10px 0 0; }
+.mutation-case dl div { border-top: 1px solid #e8ece9; padding-top: 6px; }
+.mutation-case dt { color: #7b8b83; font-size: 8px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+.mutation-case dd { margin: 3px 0 0; color: #3b4e44; font-size: 10px; line-height: 1.45; overflow-wrap: anywhere; }
+.source-hash { margin: 12px 0; color: #7d8d85; font-size: 9px; overflow-wrap: anywhere; }
+.source-hash code { color: #52665c; }
+@media (max-width: 900px) {
+  .compiler-summary { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 720px) {
+  .play-grid.compact, .mutation-grid { grid-template-columns: 1fr; }
+  .compiler-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .proof-head { flex-direction: column; }
+}

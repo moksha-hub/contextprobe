@@ -1,353 +1,70 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 2010" width="1400" height="2010" font-family="'Comic Sans MS','Segoe Print','Bradley Hand','Chalkboard SE',cursive">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 1300" width="1400" height="1300" role="img" aria-labelledby="title desc">
+  <title id="title">Contextprobe current system architecture</title>
+  <desc id="desc">Two separate paths: a stateless proof-carrying mutation playground and a legacy SQLite risk and repair demonstration, followed by clearly marked future priorities.</desc>
   <defs>
-    <pattern id="grid" width="26" height="26" patternUnits="userSpaceOnUse">
-      <path d="M 26 0 L 0 0 0 26" fill="none" stroke="#dcd5c4" stroke-width="0.6"/>
-    </pattern>
-    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M 0 1 L 10 5 L 0 9 z" fill="#23201c"/>
-    </marker>
-    <marker id="arrowRed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M 0 1 L 10 5 L 0 9 z" fill="#b03a2e"/>
-    </marker>
-    <marker id="arrowBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M 0 1 L 10 5 L 0 9 z" fill="#1f4e79"/>
-    </marker>
-    <g id="stack">
-      <path d="M0,8 C0,3 9,0 22,0 C35,0 44,3 44,8 L44,34 C44,39 35,42 22,42 C9,42 0,39 0,34 Z"
-            fill="#fff" stroke="#23201c" stroke-width="2"/>
-      <path d="M0,8 C0,13 9,16 22,16 C35,16 44,13 44,8" fill="none" stroke="#23201c" stroke-width="1.6"/>
-    </g>
+    <pattern id="grid" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="#e8e3d8" stroke-width="1"/></pattern>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 1L10 5L0 9Z" fill="#26352f"/></marker>
+    <style>
+      text{font-family:Inter,Segoe UI,Arial,sans-serif;fill:#203129}.title{font-size:34px;font-weight:800}.sub{font-size:16px;fill:#63736b}.h{font-size:20px;font-weight:800}.k{font-size:13px;font-weight:800;letter-spacing:1.2px}.b{font-size:14px}.s{font-size:12px;fill:#63736b}.mono{font-family:Consolas,monospace;font-size:12px}.card{fill:#fff;stroke:#ced9d2;stroke-width:2}.det{fill:#eef7f1;stroke:#2e6b4f;stroke-width:2}.prob{fill:#fff1ef;stroke:#b64a3d;stroke-width:2}.legacy{fill:#fff9e7;stroke:#b99424;stroke-width:2}.future{fill:#f1f5fa;stroke:#35658a;stroke-width:2;stroke-dasharray:8 6}.line{fill:none;stroke:#26352f;stroke-width:2;marker-end:url(#arrow)}
+    </style>
   </defs>
+  <rect width="1400" height="1300" fill="#fcfaf4"/><rect width="1400" height="1300" fill="url(#grid)"/>
+  <rect x="70" y="38" width="1260" height="100" rx="14" class="card"/>
+  <text id="title" x="105" y="82" class="title">CONTEXTPROBE — CURRENT ARCHITECTURE</text>
+  <text x="105" y="113" class="sub">Automatic proof-carrying grounding tests beside a separate legacy risk-and-repair fixture</text>
+  <rect x="1010" y="66" width="18" height="18" class="det"/><text x="1038" y="80" class="s">deterministic verdict</text>
+  <rect x="1010" y="94" width="18" height="18" class="prob"/><text x="1038" y="108" class="s">model under test</text>
 
-  <rect width="1400" height="2010" fill="#fdfbf4"/>
-  <rect width="1400" height="2010" fill="url(#grid)"/>
-  <path d="M96,0 L96,2010" stroke="#e2b4ae" stroke-width="1.6"/>
+  <rect x="160" y="172" width="1080" height="90" rx="12" class="card"/>
+  <text x="190" y="205" class="k">REACT BROWSER</text><text x="190" y="234" class="b">Metadata-only form · compiled proofs · four variants · expected/observed labels · diagnostics · scores</text>
+  <path d="M700 262V298" class="line"/>
+  <rect x="160" y="300" width="1080" height="90" rx="12" class="card"/>
+  <text x="190" y="333" class="k">FASTAPI</text><text x="190" y="362" class="b">POST /api/playground is stateless; catalogue, risk, and repair endpoints retain the legacy fixture</text>
 
-  <!-- ===== TITLE ===== -->
-  <g transform="rotate(-0.5 700 74)">
-    <rect x="150" y="34" width="1130" height="96" rx="8" fill="#fff" stroke="#23201c" stroke-width="3"/>
-    <rect x="154" y="38" width="1130" height="96" rx="8" fill="none" stroke="#23201c" stroke-width="0.9" opacity="0.3"/>
-  </g>
-  <text x="182" y="80" font-size="34" font-weight="bold" fill="#23201c">CONTEXTPROBE &#8212; SYSTEM DESIGN BLUEPRINT</text>
-  <text x="182" y="112" font-size="19" fill="#5f5a52">Measure metadata by how an agent fails with it. Rank by what depends on it.</text>
-  <text x="1130" y="112" font-size="15" fill="#b03a2e">sheet 1 of 3</text>
+  <text x="90" y="444" class="h">A · AUTOMATIC MUTATION PATH — BUILT</text>
+  <text x="730" y="444" class="h">B · LEGACY FIXTURE PATH — RETAINED</text>
+  <rect x="70" y="466" width="620" height="548" rx="16" fill="#f8fcf9" stroke="#2e6b4f" stroke-width="2.5"/>
+  <rect x="710" y="466" width="620" height="548" rx="16" fill="#fffcf2" stroke="#b99424" stroke-width="2.5"/>
 
-  <!-- ===== THE PREMISE (top note) ===== -->
-  <g transform="rotate(0.4 700 196)">
-    <rect x="150" y="152" width="1130" height="88" rx="8" fill="#fff8e1" stroke="#c9a227" stroke-width="2"/>
-  </g>
-  <text x="176" y="184" font-size="17" fill="#7a5c00">THE PREMISE&#8194;&#8212;&#8194;coverage cannot tell these two apart, but an agent can:</text>
-  <text x="176" y="212" font-size="16" fill="#23201c">net_revenue &#8594; "Net revenue."&#8194;&#8194;&#8194;100% covered, unusable</text>
-  <text x="700" y="212" font-size="16" fill="#23201c">gross_revenue &#8594; "...in USD before returns, refunds and tax."&#8194;usable</text>
-  <text x="176" y="234" font-size="15" fill="#b03a2e">so: stop counting descriptions. start measuring whether one can be acted on.</text>
+  <rect x="105" y="500" width="550" height="76" rx="10" class="det"/>
+  <text x="125" y="529" class="k">1 · PROOF COMPILER</text><text x="125" y="554" class="b">Exact clause + evidence span + operator span + source SHA-256 + stable ID</text>
+  <path d="M380 576V604" class="line"/>
+  <rect x="105" y="606" width="550" height="86" rx="10" class="det"/>
+  <text x="125" y="635" class="k">2 · SERVER-OWNED MUTATIONS</text>
+  <text x="125" y="660" class="b">original · controlled flip · remove · bounded neutral padding</text><text x="125" y="680" class="s">Expected labels come from transform replay, not a human or model judge.</text>
+  <path d="M380 692V720" class="line"/>
+  <rect x="105" y="722" width="258" height="100" rx="10" class="prob"/>
+  <text x="125" y="751" class="k">3A · REAL MODEL</text><text x="125" y="776" class="b">Optional provider</text><text x="125" y="799" class="s">Must emit one fixed label</text>
+  <rect x="397" y="722" width="258" height="100" rx="10" class="det"/>
+  <text x="417" y="751" class="k">3B · SIMULATOR</text><text x="417" y="776" class="b">Lexical witness check</text><text x="417" y="799" class="s">Reproducibility, not AI evidence</text>
+  <path d="M380 822V850" class="line"/>
+  <rect x="105" y="852" width="550" height="124" rx="10" class="det"/>
+  <text x="125" y="881" class="k">4 · STRICT VERDICT AND SCORING</text>
+  <text x="125" y="906" class="b">SUPPORTED · CONTRADICTED · NOT_STATED · otherwise INVALID</text>
+  <text x="125" y="931" class="b">Exact comparison; fallback cases labelled and excluded from model-only score</text>
+  <text x="125" y="956" class="s">No SQLite reads or writes. Tests grounding and sensitivity—not factual truth.</text>
 
-  <!-- ===== LAYER 1: STEWARD / UI ===== -->
-  <circle cx="126" cy="300" r="17" fill="#fff" stroke="#23201c" stroke-width="2.2"/>
-  <text x="126" y="307" font-size="17" text-anchor="middle" fill="#23201c">1</text>
-  <text x="164" y="288" font-size="21" font-weight="bold" fill="#1f4e79">PRESENTATION &#8212; React + Vite SPA (one page, no router)</text>
-  <text x="164" y="312" font-size="14" fill="#5f5a52">renders only validated structured fields. never raw model prose.</text>
+  <rect x="745" y="500" width="550" height="76" rx="10" class="legacy"/>
+  <text x="765" y="529" class="k">1 · SEEDED SQLITE CATALOGUE</text><text x="765" y="554" class="b">12 assets · lineage · 18 manually authored known-answer probes</text>
+  <path d="M1020 576V604" class="line"/>
+  <rect x="745" y="606" width="550" height="86" rx="10" class="legacy"/>
+  <text x="765" y="635" class="k">2 · RUNNER + ANSWERER</text><text x="765" y="660" class="b">Description-only context → simulated or real-model answer</text><text x="765" y="680" class="s">The simulator’s hypothesis was falsified by the recorded model study.</text>
+  <path d="M1020 692V720" class="line"/>
+  <rect x="745" y="722" width="550" height="100" rx="10" class="legacy"/>
+  <text x="765" y="751" class="k">3 · LEGACY MARKER GRADER + RISK</text>
+  <text x="765" y="776" class="b">correct · abstained · confident_wrong</text><text x="765" y="799" class="s">Risk uses wrong-rate × downstream blast radius × certification.</text>
+  <path d="M1020 822V850" class="line"/>
+  <rect x="745" y="852" width="550" height="124" rx="10" class="legacy"/>
+  <text x="765" y="881" class="k">4 · DRY-RUN REPAIR GATE</text>
+  <text x="765" y="906" class="b">Ground from upstream/siblings → compose → re-probe → always restore</text>
+  <text x="765" y="931" class="b">Accept only fixed &gt; 0 and regressed = 0; human approval remains required</text>
+  <text x="765" y="956" class="s">Historical demonstration: answerability, not truth. Results persist only outside dry runs.</text>
 
-  <g transform="rotate(-0.4 320 372)">
-    <rect x="164" y="330" width="256" height="112" rx="7" fill="#fff" stroke="#23201c" stroke-width="2.2"/>
-    <rect x="167" y="333" width="256" height="112" rx="7" fill="none" stroke="#23201c" stroke-width="0.8" opacity="0.32"/>
-  </g>
-  <text x="180" y="356" font-size="16" font-weight="bold" fill="#23201c">RISK QUEUE</text>
-  <text x="180" y="380" font-size="13" fill="#5f5a52">sorted desc by risk</text>
-  <text x="180" y="400" font-size="13" fill="#5f5a52">cov / ok / abst / wrong</text>
-  <text x="180" y="420" font-size="13" fill="#5f5a52">downstream + badges</text>
-
-  <g transform="rotate(0.3 590 372)">
-    <rect x="440" y="330" width="256" height="112" rx="7" fill="#fff" stroke="#23201c" stroke-width="2.2"/>
-    <rect x="443" y="333" width="256" height="112" rx="7" fill="none" stroke="#23201c" stroke-width="0.8" opacity="0.32"/>
-  </g>
-  <text x="456" y="356" font-size="16" font-weight="bold" fill="#23201c">CONTROLLED PAIR</text>
-  <text x="456" y="380" font-size="13" fill="#5f5a52">net_revenue 0/4 correct</text>
-  <text x="456" y="400" font-size="13" fill="#5f5a52">gross_revenue 4/4</text>
-  <text x="456" y="420" font-size="13" fill="#b03a2e">same coverage. same asset.</text>
-
-  <g transform="rotate(-0.3 860 372)">
-    <rect x="716" y="330" width="256" height="112" rx="7" fill="#fff" stroke="#23201c" stroke-width="2.2"/>
-    <rect x="719" y="333" width="256" height="112" rx="7" fill="none" stroke="#23201c" stroke-width="0.8" opacity="0.32"/>
-  </g>
-  <text x="732" y="356" font-size="16" font-weight="bold" fill="#23201c">ASSET DETAIL</text>
-  <text x="732" y="380" font-size="13" fill="#5f5a52">per-probe outcome chips</text>
-  <text x="732" y="400" font-size="13" fill="#5f5a52">answer + context_seen</text>
-  <text x="732" y="420" font-size="13" fill="#5f5a52">per-column breakdown</text>
-
-  <g transform="rotate(0.45 1126 372)">
-    <rect x="992" y="330" width="268" height="112" rx="7" fill="#f2fbf4" stroke="#2e6b4f" stroke-width="2.4"/>
-  </g>
-  <text x="1008" y="356" font-size="16" font-weight="bold" fill="#2e6b4f">FIX &amp; RE-PROBE</text>
-  <text x="1008" y="380" font-size="13" fill="#5f5a52">edit description inline</text>
-  <text x="1008" y="400" font-size="13" fill="#5f5a52">PATCH &#8594; re-run &#8594; refresh</text>
-  <text x="1008" y="420" font-size="13" fill="#2e6b4f">watch risk drop live</text>
-
-  <path d="M1126,442 C1126,470 1240,470 1240,500 C1240,690 1240,900 1240,1030"
-        fill="none" stroke="#2e6b4f" stroke-width="2" stroke-dasharray="7 6" marker-end="url(#arrow)"/>
-  <text x="1252" y="700" font-size="13" fill="#2e6b4f" transform="rotate(90 1252 700)">the closed loop: fix &#8594; re-measure</text>
-
-  <path d="M700,446 C700,462 700,468 700,486" fill="none" stroke="#23201c" stroke-width="2.4" marker-end="url(#arrow)"/>
-  <text x="712" y="470" font-size="13" fill="#5f5a52">JSON / REST</text>
-
-  <!-- ===== LAYER 2: API ===== -->
-  <circle cx="126" cy="520" r="17" fill="#fff" stroke="#23201c" stroke-width="2.2"/>
-  <text x="126" y="527" font-size="17" text-anchor="middle" fill="#23201c">2</text>
-  <text x="164" y="510" font-size="21" font-weight="bold" fill="#1f4e79">API &#8212; FastAPI (app/main.py)</text>
-
-  <g transform="rotate(-0.25 712 588)">
-    <rect x="164" y="534" width="1096" height="112" rx="7" fill="#fff" stroke="#23201c" stroke-width="2.4"/>
-    <rect x="167" y="537" width="1096" height="112" rx="7" fill="none" stroke="#23201c" stroke-width="0.8" opacity="0.3"/>
-  </g>
-  <text x="184" y="560" font-size="14" fill="#23201c">GET&#8194;/api/queue&#8194;&#8194;risk-ranked repair list</text>
-  <text x="184" y="582" font-size="14" fill="#23201c">GET&#8194;/api/assets/{id}&#8194;&#8194;columns, probes, results</text>
-  <text x="184" y="604" font-size="14" fill="#23201c">GET&#8194;/api/report&#8194;&#8194;coverage vs risk + pair</text>
-  <text x="184" y="626" font-size="14" fill="#23201c">GET&#8194;/health&#8194;&#8194;llm_configured flag</text>
-  <text x="700" y="560" font-size="14" fill="#23201c">POST&#8194;&#8194;/api/probe&#8194;&#8194;whole catalog</text>
-  <text x="700" y="582" font-size="14" fill="#23201c">POST&#8194;&#8194;/api/assets/{id}/probe</text>
-  <text x="700" y="604" font-size="14" fill="#23201c">PATCH&#8194;/api/assets/{id}/description</text>
-  <text x="700" y="626" font-size="14" fill="#23201c">POST&#8194;&#8194;/api/reset&#8194;&#8194;restore fixture</text>
-  <text x="1012" y="560" font-size="13" fill="#b03a2e">Pydantic bounds in</text>
-  <text x="1012" y="580" font-size="13" fill="#b03a2e">CORS allow-list</text>
-  <text x="1012" y="600" font-size="13" fill="#b03a2e">sqlite3.Error &#8594; 503</text>
-  <text x="1012" y="620" font-size="13" fill="#b03a2e">(fail closed, no fake queue)</text>
-
-  <path d="M700,650 C700,666 700,672 700,692" fill="none" stroke="#23201c" stroke-width="2.4" marker-end="url(#arrow)"/>
-
-  <!-- ===== LAYER 3: ORCHESTRATION ===== -->
-  <circle cx="126" cy="726" r="17" fill="#fff" stroke="#23201c" stroke-width="2.2"/>
-  <text x="126" y="733" font-size="17" text-anchor="middle" fill="#23201c">3</text>
-  <text x="164" y="716" font-size="21" font-weight="bold" fill="#1f4e79">ORCHESTRATION &#8212; runner.run_probes()  [one pass per probe, no agent loop]</text>
-
-  <g transform="rotate(0.2 712 790)">
-    <rect x="164" y="740" width="1096" height="104" rx="7" fill="#fff" stroke="#23201c" stroke-width="2.4"/>
-  </g>
-  <g font-size="13" fill="#23201c">
-    <rect x="182" y="758" width="150" height="66" rx="5" fill="#eef4fa" stroke="#1f4e79" stroke-width="1.8"/>
-    <text x="196" y="780">build_context()</text>
-    <text x="196" y="800" font-size="11" fill="#5f5a52">asset + column desc</text>
-    <text x="196" y="816" font-size="11" fill="#5f5a52">ONLY. no hints.</text>
-
-    <rect x="356" y="758" width="150" height="66" rx="5" fill="#eef4fa" stroke="#1f4e79" stroke-width="1.8"/>
-    <text x="370" y="780">context_text()</text>
-    <text x="370" y="800" font-size="11" fill="#5f5a52">descriptions only &#8212;</text>
-    <text x="370" y="816" font-size="11" fill="#b03a2e">names excluded!</text>
-
-    <rect x="530" y="758" width="150" height="66" rx="5" fill="#eef4fa" stroke="#1f4e79" stroke-width="1.8"/>
-    <text x="544" y="780">answerable()</text>
-    <text x="544" y="800" font-size="11" fill="#5f5a52">required facts</text>
-    <text x="544" y="816" font-size="11" fill="#5f5a52">present? bool</text>
-
-    <rect x="704" y="758" width="150" height="66" rx="5" fill="#fdeceb" stroke="#b03a2e" stroke-width="1.8"/>
-    <text x="718" y="780">answer</text>
-    <text x="718" y="800" font-size="11" fill="#5f5a52">simulated | llm</text>
-    <text x="718" y="816" font-size="11" fill="#b03a2e">probabilistic</text>
-
-    <rect x="878" y="758" width="150" height="66" rx="5" fill="#eef7f1" stroke="#2e6b4f" stroke-width="1.8"/>
-    <text x="892" y="780">grade()</text>
-    <text x="892" y="800" font-size="11" fill="#5f5a52">3-way outcome</text>
-    <text x="892" y="816" font-size="11" fill="#2e6b4f">deterministic</text>
-
-    <rect x="1052" y="758" width="190" height="66" rx="5" fill="#eef7f1" stroke="#2e6b4f" stroke-width="1.8"/>
-    <text x="1066" y="780">save_results()</text>
-    <text x="1066" y="800" font-size="11" fill="#5f5a52">+ context_seen stored</text>
-    <text x="1066" y="816" font-size="11" fill="#5f5a52">&#8594; auditable later</text>
-  </g>
-  <path d="M332,791 L354,791" stroke="#23201c" stroke-width="1.8" marker-end="url(#arrow)"/>
-  <path d="M506,791 L528,791" stroke="#23201c" stroke-width="1.8" marker-end="url(#arrow)"/>
-  <path d="M680,791 L702,791" stroke="#23201c" stroke-width="1.8" marker-end="url(#arrow)"/>
-  <path d="M854,791 L876,791" stroke="#23201c" stroke-width="1.8" marker-end="url(#arrow)"/>
-  <path d="M1028,791 L1050,791" stroke="#23201c" stroke-width="1.8" marker-end="url(#arrow)"/>
-
-  <!-- ===== TRUST BOUNDARY ===== -->
-  <g transform="rotate(-0.15 712 962)">
-    <rect x="150" y="880" width="1124" height="176" rx="12" fill="none" stroke="#b03a2e" stroke-width="2.6" stroke-dasharray="12 8"/>
-  </g>
-  <rect x="176" y="866" width="352" height="28" rx="5" fill="#fdfbf4"/>
-  <text x="186" y="887" font-size="16" font-weight="bold" fill="#b03a2e">TRUST BOUNDARY &#8212; probabilistic zone</text>
-
-  <!-- ===== LAYER 4: ANSWERER ===== -->
-  <circle cx="126" cy="928" r="17" fill="#fff" stroke="#23201c" stroke-width="2.2"/>
-  <text x="126" y="935" font-size="17" text-anchor="middle" fill="#23201c">4</text>
-
-  <g transform="rotate(0.3 400 966)">
-    <rect x="176" y="904" width="448" height="132" rx="7" fill="#fdeceb" stroke="#b03a2e" stroke-width="2.4"/>
-  </g>
-  <text x="194" y="930" font-size="17" font-weight="bold" fill="#b03a2e">ENGINE A &#8212; simulated (default, no key)</text>
-  <text x="194" y="954" font-size="13" fill="#23201c">ordered rules, first match wins:</text>
-  <text x="194" y="974" font-size="12.5" fill="#23201c">1. all facts present&#8194;&#8594; answer correctly</text>
-  <text x="194" y="993" font-size="12.5" fill="#23201c">2. no description&#8194;&#8194;&#8194;&#8594; ABSTAIN</text>
-  <text x="194" y="1012" font-size="12.5" fill="#23201c">3. self-declared unverified &#8594; ABSTAIN</text>
-  <text x="194" y="1031" font-size="12.5" fill="#b03a2e">4. present but vague&#8194;&#8594; CONFIDENT GUESS</text>
-
-  <g transform="rotate(-0.3 950 966)">
-    <rect x="656" y="904" width="440" height="132" rx="7" fill="#fdeceb" stroke="#b03a2e" stroke-width="2.4"/>
-  </g>
-  <text x="674" y="930" font-size="17" font-weight="bold" fill="#b03a2e">ENGINE B &#8212; llm (optional, real model)</text>
-  <text x="674" y="954" font-size="13" fill="#23201c">same context. same questions.</text>
-  <text x="674" y="974" font-size="12.5" fill="#23201c">temp 0 &#183; JSON mode &#183; 30s timeout</text>
-  <text x="674" y="993" font-size="12.5" fill="#23201c">must set abstained:true if unsure</text>
-  <text x="674" y="1012" font-size="12.5" fill="#5f5a52">per-probe fallback &#8594; Engine A</text>
-  <text x="674" y="1031" font-size="12.5" fill="#5f5a52">llm_fallbacks counted + reported</text>
-
-  <path d="M1096,970 C1130,970 1148,970 1178,970" fill="none" stroke="#b03a2e" stroke-width="2" marker-end="url(#arrowRed)"/>
-  <g transform="rotate(2 1240 970)">
-    <rect x="1184" y="938" width="86" height="64" rx="7" fill="#fff" stroke="#b03a2e" stroke-width="2"/>
-  </g>
-  <text x="1196" y="962" font-size="12" fill="#b03a2e">external</text>
-  <text x="1196" y="980" font-size="12" fill="#b03a2e">provider</text>
-  <text x="1196" y="996" font-size="10.5" fill="#5f5a52">no PII sent</text>
-
-  <path d="M624,970 L654,970" stroke="#5f5a52" stroke-width="1.8" stroke-dasharray="5 4"/>
-  <text x="612" y="1050" font-size="13.5" fill="#b03a2e">Engine A is a documented HYPOTHESIS about behaviour, not evidence about real models.</text>
-  <text x="612" y="1070" font-size="13.5" fill="#b03a2e">Engine B is what turns the hypothesis into a measurement. Only B produces evidence.</text>
-
-  <path d="M400,1056 C400,1084 400,1090 400,1112" fill="none" stroke="#23201c" stroke-width="2.4" marker-end="url(#arrow)"/>
-
-  <!-- ===== LAYER 5: DETERMINISTIC ZONE ===== -->
-  <g transform="rotate(0.15 712 1216)">
-    <rect x="150" y="1104" width="1124" height="230" rx="12" fill="none" stroke="#2e6b4f" stroke-width="2.6" stroke-dasharray="12 8"/>
-  </g>
-  <rect x="176" y="1090" width="382" height="28" rx="5" fill="#fdfbf4"/>
-  <text x="186" y="1111" font-size="16" font-weight="bold" fill="#2e6b4f">DETERMINISTIC ZONE &#8212; code owns every verdict</text>
-
-  <circle cx="126" cy="1152" r="17" fill="#fff" stroke="#23201c" stroke-width="2.2"/>
-  <text x="126" y="1159" font-size="17" text-anchor="middle" fill="#23201c">5</text>
-
-  <g transform="rotate(-0.35 320 1222)">
-    <rect x="176" y="1128" width="288" height="188" rx="7" fill="#eef7f1" stroke="#2e6b4f" stroke-width="2.2"/>
-  </g>
-  <text x="192" y="1154" font-size="16" font-weight="bold" fill="#2e6b4f">grader.py</text>
-  <text x="192" y="1178" font-size="12.5" fill="#23201c">1. abstained flag OR</text>
-  <text x="192" y="1196" font-size="12.5" fill="#23201c">&#8194;&#8194;&#8194;abstain phrase &#8594; ABSTAINED</text>
-  <text x="192" y="1218" font-size="12.5" fill="#23201c">2. matches marker &#8594; CORRECT</text>
-  <text x="192" y="1240" font-size="12.5" fill="#b03a2e">3. else &#8594; CONFIDENT_WRONG</text>
-  <text x="192" y="1266" font-size="12" fill="#5f5a52">also flags over_abstention</text>
-  <text x="192" y="1284" font-size="12" fill="#5f5a52">(facts were there, still declined)</text>
-  <text x="192" y="1306" font-size="11.5" fill="#2e6b4f">model is SUBJECT, never JUDGE</text>
-
-  <g transform="rotate(0.25 620 1222)">
-    <rect x="484" y="1128" width="272" height="188" rx="7" fill="#eef7f1" stroke="#2e6b4f" stroke-width="2.2"/>
-  </g>
-  <text x="500" y="1154" font-size="16" font-weight="bold" fill="#2e6b4f">catalog.py</text>
-  <text x="500" y="1178" font-size="12.5" fill="#23201c">BFS over lineage_edges</text>
-  <text x="500" y="1198" font-size="12.5" fill="#23201c">visited set, no cycles</text>
-  <text x="500" y="1220" font-size="12.5" fill="#23201c">downstream_count()</text>
-  <text x="500" y="1242" font-size="12.5" fill="#23201c">coverage() &#8212; the naive</text>
-  <text x="500" y="1260" font-size="12.5" fill="#23201c">metric, kept for contrast</text>
-  <text x="500" y="1286" font-size="12" fill="#5f5a52">context assembly lives here</text>
-  <text x="500" y="1306" font-size="11.5" fill="#b03a2e">ground truth never enters it</text>
-
-  <g transform="rotate(-0.2 1000 1222)">
-    <rect x="776" y="1128" width="480" height="188" rx="7" fill="#eef7f1" stroke="#2e6b4f" stroke-width="2.2"/>
-  </g>
-  <text x="792" y="1154" font-size="16" font-weight="bold" fill="#2e6b4f">risk.py &#8212; the ranking</text>
-  <rect x="792" y="1166" width="446" height="42" rx="5" fill="#ffe9a8" stroke="#c9a227" stroke-width="1.6"/>
-  <text x="804" y="1194" font-size="15" fill="#23201c">risk = confident_wrong_rate &#215; (1 + downstream) &#215; cert</text>
-  <text x="792" y="1230" font-size="12.5" fill="#23201c">RATE not count&#8194;&#8594; thorough testing isn't punished</text>
-  <text x="792" y="1250" font-size="12.5" fill="#23201c">(1 + downstream)&#8194;&#8594; blast radius from the graph</text>
-  <text x="792" y="1270" font-size="12.5" fill="#23201c">cert = 1.5&#8194;&#8194;&#8194;&#8594; a badge is a promise</text>
-  <text x="792" y="1292" font-size="12.5" fill="#b03a2e">abstained contributes ZERO. only the dangerous</text>
-  <text x="792" y="1310" font-size="12.5" fill="#b03a2e">bucket moves the number.</text>
-
-  <path d="M712,1334 C712,1358 712,1364 712,1386" fill="none" stroke="#23201c" stroke-width="2.4" marker-end="url(#arrow)"/>
-
-  <!-- ===== LAYER 6: STORAGE ===== -->
-  <circle cx="126" cy="1424" r="17" fill="#fff" stroke="#23201c" stroke-width="2.2"/>
-  <text x="126" y="1431" font-size="17" text-anchor="middle" fill="#23201c">6</text>
-  <text x="164" y="1412" font-size="21" font-weight="bold" fill="#1f4e79">PERSISTENCE &#8212; SQLite (zero setup, seeded + upserted on boot)</text>
-
-  <g transform="rotate(0.2 712 1466)">
-    <rect x="164" y="1396" width="1096" height="128" rx="7" fill="#fff" stroke="#23201c" stroke-width="2.4"/>
-  </g>
-  <g transform="translate(196,1424)"><use href="#stack"/></g>
-  <text x="188" y="1494" font-size="13" fill="#23201c">assets</text>
-  <text x="188" y="1512" font-size="11" fill="#5f5a52">certified, deprecated</text>
-  <g transform="translate(360,1424)"><use href="#stack"/></g>
-  <text x="348" y="1494" font-size="13" fill="#23201c">columns</text>
-  <text x="348" y="1512" font-size="11" fill="#5f5a52">description (editable)</text>
-  <g transform="translate(524,1424)"><use href="#stack"/></g>
-  <text x="504" y="1494" font-size="13" fill="#23201c">lineage_edges</text>
-  <text x="504" y="1512" font-size="11" fill="#5f5a52">directed up &#8594; down</text>
-  <g transform="translate(700,1424)"><use href="#stack"/></g>
-  <text x="676" y="1494" font-size="13" fill="#23201c">probes</text>
-  <text x="676" y="1512" font-size="11" fill="#b03a2e">holds hidden ground truth</text>
-  <g transform="translate(900,1424)"><use href="#stack"/></g>
-  <text x="874" y="1494" font-size="13" fill="#23201c">probe_results</text>
-  <text x="874" y="1512" font-size="11" fill="#5f5a52">outcome + context_seen</text>
-  <text x="1060" y="1444" font-size="12.5" fill="#b03a2e">probes are UPSERTED, not</text>
-  <text x="1060" y="1462" font-size="12.5" fill="#b03a2e">INSERT-OR-IGNORE &#8212; a fixed</text>
-  <text x="1060" y="1480" font-size="12.5" fill="#b03a2e">suite must never grade</text>
-  <text x="1060" y="1498" font-size="12.5" fill="#b03a2e">against a stale seeded row.</text>
-  <text x="1060" y="1516" font-size="11.5" fill="#5f5a52">(this was a real bug)</text>
-
-  <!-- ===== BUGS THE HARNESS CAUGHT ===== -->
-  <g transform="rotate(-0.3 430 1620)">
-    <rect x="164" y="1552" width="532" height="176" rx="8" fill="#fff8e1" stroke="#c9a227" stroke-width="2.2"/>
-  </g>
-  <text x="182" y="1580" font-size="17" font-weight="bold" fill="#7a5c00">3 DEFECTS THE SELF-TESTS FOUND</text>
-  <text x="182" y="1608" font-size="13" fill="#23201c">1.&#8194;"not deducted" contains "deduct" &#8594; a WRONG</text>
-  <text x="196" y="1626" font-size="13" fill="#23201c">answer was being graded CORRECT</text>
-  <text x="182" y="1652" font-size="13" fill="#23201c">2.&#8194;INSERT OR IGNORE &#8594; corrected probes never</text>
-  <text x="196" y="1670" font-size="13" fill="#23201c">reached an existing db</text>
-  <text x="182" y="1696" font-size="13" fill="#23201c">3.&#8194;a fact found in the asset NAME, not any</text>
-  <text x="196" y="1714" font-size="13" fill="#23201c">description &#8594; credit for an identifier</text>
-
-  <g transform="rotate(0.25 986 1620)">
-    <rect x="716" y="1552" width="544" height="176" rx="8" fill="#fff" stroke="#23201c" stroke-width="2.2"/>
-  </g>
-  <text x="734" y="1580" font-size="17" font-weight="bold" fill="#1f4e79">LEGEND &amp; INVARIANTS</text>
-  <rect x="734" y="1594" width="18" height="14" fill="#fdeceb" stroke="#b03a2e" stroke-width="1.6"/>
-  <text x="762" y="1607" font-size="13" fill="#23201c">probabilistic &#8212; may be wrong, is measured</text>
-  <rect x="734" y="1618" width="18" height="14" fill="#eef7f1" stroke="#2e6b4f" stroke-width="1.6"/>
-  <text x="762" y="1631" font-size="13" fill="#23201c">deterministic &#8212; owns all verdicts</text>
-  <rect x="734" y="1642" width="18" height="14" fill="#eef4fa" stroke="#1f4e79" stroke-width="1.6"/>
-  <text x="762" y="1655" font-size="13" fill="#23201c">pure function, no side effects</text>
-  <text x="734" y="1680" font-size="13" fill="#b03a2e">INV-1&#8194;no wrong answer may match its own marker</text>
-  <text x="734" y="1700" font-size="13" fill="#b03a2e">INV-2&#8194;ground truth never leaves the probes table</text>
-  <text x="734" y="1720" font-size="13" fill="#b03a2e">INV-3&#8194;GT = the omitted fact, not "metadata is empty"</text>
-
-  <text x="164" y="1758" font-size="12.5" fill="#5f5a52">verify: py backend\selfcheck.py&#8194;&#183;&#8194;py backend\repaircheck.py&#8194;&#183;&#8194;py backend\apicheck.py&#8194;&#183;&#8194;py backend\measure.py&#8194;&#183;&#8194;npm run build</text>
-
-  <!-- ===== LAYER 7: CLOSING THE LOOP ===== -->
-  <circle cx="126" cy="1852" r="17" fill="#fff" stroke="#23201c" stroke-width="2.2"/>
-  <text x="126" y="1859" font-size="17" text-anchor="middle" fill="#23201c">7</text>
-  <text x="164" y="1840" font-size="21" font-weight="bold" fill="#1f4e79">CLOSING THE LOOP &#8212; the repair gate&#8194;&#8194;(detailed on sheet 3)</text>
-
-  <g transform="rotate(0.2 712 1912)">
-    <rect x="164" y="1856" width="1096" height="120" rx="7" fill="#f2fbf4" stroke="#2e6b4f" stroke-width="2.4"/>
-  </g>
-  <g font-size="12.5">
-    <rect x="182" y="1876" width="150" height="80" rx="5" fill="#fff" stroke="#2e6b4f" stroke-width="1.8"/>
-    <text x="194" y="1900" fill="#23201c">measure</text>
-    <text x="194" y="1920" font-size="11" fill="#5f5a52">which description</text>
-    <text x="194" y="1938" font-size="11" fill="#5f5a52">fails, ranked by</text>
-    <text x="194" y="1952" font-size="11" fill="#5f5a52">blast radius</text>
-
-    <rect x="356" y="1876" width="150" height="80" rx="5" fill="#fff" stroke="#2e6b4f" stroke-width="1.8"/>
-    <text x="368" y="1900" fill="#23201c">ground</text>
-    <text x="368" y="1920" font-size="11" fill="#5f5a52">upstream + sibling</text>
-    <text x="368" y="1938" font-size="11" fill="#5f5a52">text only. never the</text>
-    <text x="368" y="1952" font-size="11" fill="#b03a2e">probe's own terms</text>
-
-    <rect x="530" y="1876" width="150" height="80" rx="5" fill="#fff" stroke="#2e6b4f" stroke-width="1.8"/>
-    <text x="542" y="1900" fill="#23201c">re-probe</text>
-    <text x="542" y="1920" font-size="11" fill="#5f5a52">apply candidate,</text>
-    <text x="542" y="1938" font-size="11" fill="#5f5a52">run same suite,</text>
-    <text x="542" y="1952" font-size="11" fill="#2e6b4f">restore original</text>
-
-    <rect x="704" y="1876" width="216" height="80" rx="5" fill="#ffe9a8" stroke="#c9a227" stroke-width="2"/>
-    <text x="716" y="1900" fill="#23201c">GATE</text>
-    <text x="716" y="1922" font-size="12" fill="#23201c">accept &#8660; fixed &gt; 0</text>
-    <text x="716" y="1942" font-size="12" fill="#23201c">AND regressed = 0</text>
-
-    <rect x="944" y="1876" width="298" height="80" rx="5" fill="#fff" stroke="#23201c" stroke-width="1.8"/>
-    <text x="956" y="1900" fill="#23201c">measured on the fixture</text>
-    <text x="956" y="1922" font-size="12" fill="#2e6b4f">1 of 3 columns accepted</text>
-    <text x="956" y="1942" font-size="11.5" fill="#5f5a52">both rejections correct: the fact</text>
-    <text x="956" y="1958" font-size="11.5" fill="#5f5a52">exists nowhere in the catalog</text>
-  </g>
-  <path d="M332,1916 L354,1916" stroke="#23201c" stroke-width="1.8" marker-end="url(#arrow)"/>
-  <path d="M506,1916 L528,1916" stroke="#23201c" stroke-width="1.8" marker-end="url(#arrow)"/>
-  <path d="M680,1916 L702,1916" stroke="#23201c" stroke-width="1.8" marker-end="url(#arrow)"/>
-  <path d="M920,1916 L942,1916" stroke="#23201c" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <text x="90" y="1068" class="h">NEXT PRIORITIES — NOT YET BUILT</text>
+  <rect x="70" y="1090" width="396" height="146" rx="12" class="future"/>
+  <text x="92" y="1121" class="k">P0 · CONTEXT SOURCE ADAPTERS</text><text x="92" y="1148" class="b">Compile provenance-backed claims from</text><text x="92" y="1170" class="b">types, glossary, constraints, lineage,</text><text x="92" y="1192" class="b">dbt artifacts, and historical traces.</text><text x="92" y="1218" class="s">Broader context, same proof boundary.</text>
+  <rect x="502" y="1090" width="396" height="146" rx="12" class="future"/>
+  <text x="524" y="1121" class="k">P0 · MULTI-MODEL MATRIX</text><text x="524" y="1148" class="b">Run the identical compiled cases across</text><text x="524" y="1170" class="b">multiple configured providers; preserve</text><text x="524" y="1192" class="b">per-model failures and fallback counts.</text><text x="524" y="1218" class="s">No cross-model judge.</text>
+  <rect x="934" y="1090" width="396" height="146" rx="12" class="future"/>
+  <text x="956" y="1121" class="k">P1 · REGRESSION BASELINES</text><text x="956" y="1148" class="b">Version source hash, compiler version,</text><text x="956" y="1170" class="b">model, and observed labels; diff them</text><text x="956" y="1192" class="b">on metadata changes in CI.</text><text x="956" y="1218" class="s">Then add task traces and SQL sandboxes.</text>
 </svg>

@@ -22,9 +22,10 @@ the numbers quoted in README section 4.
 
 ## Invariants that must not be broken
 
-- **No model may grade a model.** Correctness comes from hidden ground-truth
-  markers and substring matching in `grader.py`. If you ever feel the urge to ask
-  an LLM whether an answer was right, that is the wrong direction.
+- **No model may grade a model.** The legacy fixture uses hidden ground-truth
+  markers and substring matching in `grader.py`. The mutation playground uses
+  exact fixed labels plus replayed span and transform proofs in `playground.py`.
+  Neither path may ask another LLM whether an answer was right.
 - **A dry run leaves nothing behind.** `repair.py` temporarily writes a candidate
   description and restores it in a `finally` block, and it runs probes with
   `persist=False`. Both are asserted in `repaircheck.py`. Do not "simplify" either.

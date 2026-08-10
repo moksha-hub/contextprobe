@@ -29,7 +29,7 @@ if (main_module.FRONTEND_DIST / "index.html").exists():
     assert '<div id="root"></div>' in root.text
     assert client.get("/health").headers["content-type"].startswith("application/json")
 
-# Browser playground: user input is evaluated without touching fixture storage.
+# Browser playground: compile proofs and mutations without touching fixture storage.
 def stored_counts() -> tuple[int, int]:
     with connect() as db:
         return (
@@ -40,39 +40,56 @@ def stored_counts() -> tuple[int, int]:
 
 playground_before = stored_counts()
 playground_payload = {
-    "column_name": "net_revenue",
-    "description": "Net revenue.",
-    "question": "Does net_revenue include tax?",
-    "expected_answer": "No. Net revenue excludes tax.",
-    "required_terms": "tax, excl",
-    "correct_markers": "no, excl",
-    "proposed_rewrite": "Net revenue in USD after refunds, excluding tax.",
+    "column_name": "payment_amount",
+    "data_type": "decimal",
+    "description": "Payment amount in USD, excluding tax.",
     "mode": "simulated",
-    "downstream_count": 2,
-    "certified": True,
+    "pad_repetitions": 2,
 }
 playground_response = client.post("/api/playground", json=playground_payload)
 assert playground_response.status_code == 200, playground_response.text
 playground = playground_response.json()
-assert playground["original"]["outcome"] == "confident_wrong", playground
-assert playground["original"]["risk"] == 4.5, playground
-assert playground["rewrite"]["outcome"] == "correct", playground
-assert playground["rewrite"]["risk"] == 0.0, playground
-assert playground["comparison"]["transition"] == "fixed", playground
+assert playground["compiler_version"] == "proof-probe-v1", playground
+assert playground["fixed_labels"] == ["SUPPORTED", "CONTRADICTED", "NOT_STATED"]
+assert len(playground["proofs"]) == 1, playground
+proof = playground["proofs"][0]
+assert proof["evidence_span"]["text"] == "Payment amount in USD, excluding tax"
+assert proof["operator"]["source"] == "excluding"
+assert proof["operator"]["opposite"] == "including"
+assert [item["kind"] for item in proof["variants"]] == [
+    "original", "flip", "remove", "pad"
+]
+assert [item["expected_label"] for item in proof["variants"]] == [
+    "SUPPORTED", "CONTRADICTED", "NOT_STATED", "SUPPORTED"
+]
+assert all(item["passed"] for item in proof["variants"]), proof
+assert playground["summary"]["total_cases"] == 4
+assert playground["summary"]["total_score"] == 1.0
+assert playground["summary"]["model_only_score"] is None
+assert playground["summary"]["fallback_cases"] == 0
+assert "does not establish" in playground["caution"]
 assert playground_before == stored_counts(), "playground must not persist results"
 
-single = dict(playground_payload)
-single["proposed_rewrite"] = ""
-single_response = client.post("/api/playground", json=single)
-assert single_response.status_code == 200
-assert single_response.json()["rewrite"] is None
-assert single_response.json()["comparison"] is None
+# Unsupported text succeeds with an honest empty compilation, never invented tests.
+no_match = dict(playground_payload)
+no_match["description"] = "Payment amount in USD."
+no_match_response = client.post("/api/playground", json=no_match)
+assert no_match_response.status_code == 200, no_match_response.text
+empty = no_match_response.json()
+assert empty["proofs"] == []
+assert empty["summary"]["total_cases"] == 0
+assert empty["summary"]["total_score"] is None
+assert any(item["code"] == "no_supported_claim" for item in empty["diagnostics"])
 
+# Malformed and legacy client-authored grading fields are rejected.
 invalid = dict(playground_payload)
-invalid["correct_markers"] = " , "
+invalid["description"] = "   "
 assert client.post("/api/playground", json=invalid).status_code == 422
 invalid = dict(playground_payload)
-invalid["downstream_count"] = -1
+invalid["pad_repetitions"] = 0
+assert client.post("/api/playground", json=invalid).status_code == 422
+invalid = dict(playground_payload)
+invalid["question"] = "Does this include tax?"
 assert client.post("/api/playground", json=invalid).status_code == 422
 
 # Explicit LLM mode fails clearly when no provider is configured, without a call.
@@ -82,6 +99,26 @@ llm_only = dict(playground_payload)
 llm_only["mode"] = "llm"
 assert client.post("/api/playground", json=llm_only).status_code == 503
 answerer.llm_available = original_llm_available
+
+# Automatic mode labels provider failures and excludes fallback cases from model score.
+original_llm_answer = answerer.llm_answer
+answerer.llm_available = lambda: True
+answerer.llm_answer = lambda _probe, _context: None
+auto_fallback = dict(playground_payload)
+auto_fallback["mode"] = "auto"
+fallback_response = client.post("/api/playground", json=auto_fallback)
+assert fallback_response.status_code == 200, fallback_response.text
+fallback = fallback_response.json()
+assert fallback["fallback_status"] == "all"
+assert fallback["summary"]["fallback_cases"] == 4
+assert fallback["summary"]["model_cases"] == 0
+assert fallback["summary"]["model_only_score"] is None
+assert all(
+    item["llm_fallback"] and item["provider_status"] == "fallback"
+    for item in fallback["proofs"][0]["variants"]
+)
+answerer.llm_available = original_llm_available
+answerer.llm_answer = original_llm_answer
 
 # Probe the whole catalog.
 run = client.post("/api/probe", json={"mode": "simulated"}).json()
